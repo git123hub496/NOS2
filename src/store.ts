@@ -1,0 +1,338 @@
+import { create } from 'zustand';
+import { auth, db, handleFirestoreError, OperationType } from './firebase';
+import { doc, getDoc, setDoc, updateDoc, onSnapshot, Timestamp } from 'firebase/firestore';
+import { onAuthStateChanged, User as FirebaseUser } from 'firebase/auth';
+
+export type AppId = 'explorer' | 'settings' | 'terminal' | 'browser' | 'ai' | 'notepad' | 'docs' | 'slides' | 'process-manager';
+export type TaskbarPosition = 'bottom' | 'left' | 'right' | 'top';
+
+export interface Process {
+  id: string;
+  appId: AppId;
+  name: string;
+  memoryUsage: number; // in MB
+  startTime: number;
+}
+
+export interface WindowState {
+  id: AppId;
+  title: string;
+  isOpen: boolean;
+  isMinimized: boolean;
+  isMaximized: boolean;
+  zIndex: number;
+}
+
+export interface Network {
+  id: string;
+  name: string;
+  signal: number;
+  isSecure: boolean;
+}
+
+interface OSStore {
+  isBooted: boolean;
+  isLoggedIn: boolean;
+  isAuthReady: boolean;
+  isSetupComplete: boolean;
+  user: FirebaseUser | null;
+  isLiteMode: boolean;
+  wallpaper: string;
+  windows: WindowState[];
+  activeWindowId: AppId | null;
+  
+  // New System Services State
+  processes: Process[];
+  totalMemory: number; // 65536 MB
+  isGrayscale: boolean;
+  isInverted: boolean;
+  isQuickSettingsOpen: boolean;
+  
+  // Taskbar & Customization
+  taskbarPosition: TaskbarPosition;
+  pinnedAppIds: AppId[];
+  isRestarting: boolean;
+  isShutDown: boolean;
+
+  // New Hardware States
+  volume: number;
+  selectedNetwork: string;
+  networks: Network[];
+
+  boot: () => void;
+  setAuthReady: (ready: boolean) => void;
+  setUser: (user: FirebaseUser | null) => void;
+  setLiteMode: (enabled: boolean) => void;
+  setWallpaper: (url: string) => void;
+  setSetupComplete: (complete: boolean) => void;
+  
+  // App Management
+  openApp: (id: AppId, title: string) => void;
+  closeApp: (id: AppId) => void;
+  minimizeApp: (id: AppId) => void;
+  maximizeApp: (id: AppId) => void;
+  focusApp: (id: AppId) => void;
+  
+  // System Actions
+  toggleGrayscale: () => void;
+  toggleInvert: () => void;
+  toggleQuickSettings: () => void;
+  factoryReset: () => Promise<void>;
+  killProcess: (processId: string) => void;
+  setTaskbarPosition: (pos: TaskbarPosition) => void;
+  togglePinApp: (id: AppId) => void;
+  restart: () => void;
+  powerOff: () => void;
+  setVolume: (v: number) => void;
+  setNetwork: (id: string) => void;
+  
+  syncSettings: () => Promise<void>;
+}
+
+export const useOSStore = create<OSStore>((set, get) => ({
+  isBooted: false,
+  isLoggedIn: false,
+  isAuthReady: false,
+  isSetupComplete: true,
+  user: null,
+  isLiteMode: false,
+  wallpaper: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=2564&auto=format&fit=crop',
+  windows: [],
+  activeWindowId: null,
+  
+  processes: [],
+  totalMemory: 65536,
+  isGrayscale: false,
+  isInverted: false,
+  isQuickSettingsOpen: false,
+
+  taskbarPosition: 'bottom',
+  pinnedAppIds: ['explorer', 'browser', 'terminal', 'ai'],
+  isRestarting: false,
+  isShutDown: false,
+
+  volume: 80,
+  selectedNetwork: 'Nebula_5G',
+  networks: [
+    { id: '1', name: 'Nebula_5G', signal: 4, isSecure: true },
+    { id: '2', name: 'Starlink_Guest', signal: 3, isSecure: false },
+    { id: '3', name: 'Void_Net', signal: 2, isSecure: true },
+    { id: '4', name: 'Quantum_Link', signal: 1, isSecure: true },
+  ],
+
+  boot: () => set({ isBooted: true, isRestarting: false, isShutDown: false }),
+  setAuthReady: (ready) => set({ isAuthReady: ready }),
+  setUser: (user) => set({ user, isLoggedIn: !!user }),
+  setSetupComplete: async (complete) => {
+    set({ isSetupComplete: complete });
+    const { user } = get();
+    if (user) {
+      const path = `users/${user.uid}`;
+      try {
+        await updateDoc(doc(db, path), { isSetupComplete: complete });
+      } catch (error) {
+        handleFirestoreError(error, OperationType.UPDATE, path);
+      }
+    }
+  },
+  
+  toggleGrayscale: () => set(state => ({ isGrayscale: !state.isGrayscale })),
+  toggleInvert: () => set(state => ({ isInverted: !state.isInverted })),
+  toggleQuickSettings: () => set(state => ({ isQuickSettingsOpen: !state.isQuickSettingsOpen })),
+
+  setVolume: (v) => set({ volume: v }),
+  setNetwork: (id) => set({ selectedNetwork: get().networks.find(n => n.id === id)?.name || 'Disconnected' }),
+
+  setTaskbarPosition: async (pos) => {
+    set({ taskbarPosition: pos });
+    const { user } = get();
+    if (user) {
+      const path = `users/${user.uid}`;
+      try {
+        await updateDoc(doc(db, path), { taskbarPosition: pos });
+      } catch (error) {
+        handleFirestoreError(error, OperationType.UPDATE, path);
+      }
+    }
+  },
+
+  togglePinApp: async (id) => {
+    const { pinnedAppIds, user } = get();
+    const newPinned = pinnedAppIds.includes(id) 
+      ? pinnedAppIds.filter(p => p !== id)
+      : [...pinnedAppIds, id];
+    
+    set({ pinnedAppIds: newPinned });
+    if (user) {
+      const path = `users/${user.uid}`;
+      try {
+        await updateDoc(doc(db, path), { pinnedAppIds: newPinned });
+      } catch (error) {
+        handleFirestoreError(error, OperationType.UPDATE, path);
+      }
+    }
+  },
+
+  restart: () => {
+    set({ isBooted: false, isRestarting: true, windows: [], processes: [], activeWindowId: null, isQuickSettingsOpen: false });
+  },
+
+  powerOff: () => {
+    set({ isBooted: false, isShutDown: true, windows: [], processes: [], activeWindowId: null, isQuickSettingsOpen: false });
+  },
+
+  killProcess: (processId) => set(state => {
+    const process = state.processes.find(p => p.id === processId);
+    if (!process) return state;
+    return {
+      processes: state.processes.filter(p => p.id !== processId),
+      windows: state.windows.filter(w => w.id !== process.appId)
+    };
+  }),
+
+  factoryReset: async () => {
+    const { user } = get();
+    if (!user) return;
+    const path = `users/${user.uid}`;
+    try {
+      await setDoc(doc(db, path), {
+        uid: user.uid,
+        email: user.email,
+        displayName: user.displayName,
+        isLiteMode: false,
+        isSetupComplete: false,
+        wallpaper: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=2564&auto=format&fit=crop',
+        taskbarPosition: 'bottom',
+        pinnedAppIds: ['explorer', 'browser', 'terminal', 'ai'],
+        createdAt: Timestamp.now()
+      });
+      set({ isBooted: false, isRestarting: true, isSetupComplete: false });
+      window.location.reload();
+    } catch (error) {
+      handleFirestoreError(error, OperationType.WRITE, path);
+    }
+  },
+
+  setLiteMode: async (enabled) => {
+    set({ isLiteMode: enabled });
+    const { user } = get();
+    if (user) {
+      const path = `users/${user.uid}`;
+      try {
+        await updateDoc(doc(db, path), { isLiteMode: enabled });
+      } catch (error) {
+        handleFirestoreError(error, OperationType.UPDATE, path);
+      }
+    }
+  },
+
+  setWallpaper: async (url) => {
+    set({ wallpaper: url });
+    const { user } = get();
+    if (user) {
+      const path = `users/${user.uid}`;
+      try {
+        await updateDoc(doc(db, path), { wallpaper: url });
+      } catch (error) {
+        handleFirestoreError(error, OperationType.UPDATE, path);
+      }
+    }
+  },
+
+  syncSettings: async () => {
+    const { user } = get();
+    if (!user) return;
+
+    const path = `users/${user.uid}`;
+    try {
+      const userDoc = await getDoc(doc(db, path));
+      if (userDoc.exists()) {
+        const data = userDoc.data();
+        set({ 
+          isLiteMode: data.isLiteMode ?? false,
+          isSetupComplete: data.isSetupComplete ?? false,
+          wallpaper: data.wallpaper ?? 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=2564&auto=format&fit=crop',
+          taskbarPosition: data.taskbarPosition ?? 'bottom',
+          pinnedAppIds: data.pinnedAppIds ?? ['explorer', 'browser', 'terminal', 'ai']
+        });
+      } else {
+        // Initialize user document
+        await setDoc(doc(db, path), {
+          uid: user.uid,
+          email: user.email,
+          displayName: user.displayName,
+          isLiteMode: false,
+          isSetupComplete: false,
+          wallpaper: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=2564&auto=format&fit=crop',
+          taskbarPosition: 'bottom',
+          pinnedAppIds: ['explorer', 'browser', 'terminal', 'ai'],
+          createdAt: Timestamp.now()
+        });
+        set({ isSetupComplete: false });
+      }
+    } catch (error) {
+      handleFirestoreError(error, OperationType.GET, path);
+    }
+  },
+  
+  openApp: (id, title) => set((state) => {
+    const existing = state.windows.find(w => w.id === id);
+    
+    // Process Management: Add process if not exists
+    const existingProcess = state.processes.find(p => p.appId === id);
+    let newProcesses = state.processes;
+    if (!existingProcess) {
+      newProcesses = [...state.processes, {
+        id: Math.random().toString(36).substr(2, 9),
+        appId: id,
+        name: title,
+        memoryUsage: Math.floor(Math.random() * 400) + 100, // Simulated memory
+        startTime: Date.now()
+      }];
+    }
+
+    if (existing) {
+      return { 
+        windows: state.windows.map(w => w.id === id ? { ...w, isOpen: true, isMinimized: false } : w),
+        activeWindowId: id,
+        processes: newProcesses
+      };
+    }
+    const newWindow: WindowState = {
+      id,
+      title,
+      isOpen: true,
+      isMinimized: false,
+      isMaximized: false,
+      zIndex: state.windows.length + 10
+    };
+    return { 
+      windows: [...state.windows, newWindow],
+      activeWindowId: id,
+      processes: newProcesses
+    };
+  }),
+
+  closeApp: (id) => set((state) => ({
+    windows: state.windows.filter(w => w.id !== id),
+    processes: state.processes.filter(p => p.appId !== id),
+    activeWindowId: state.activeWindowId === id ? null : state.activeWindowId
+  })),
+
+  minimizeApp: (id) => set((state) => ({
+    windows: state.windows.map(w => w.id === id ? { ...w, isMinimized: true } : w),
+    activeWindowId: state.activeWindowId === id ? null : state.activeWindowId
+  })),
+
+  maximizeApp: (id) => set((state) => ({
+    windows: state.windows.map(w => w.id === id ? { ...w, isMaximized: !w.isMaximized } : w)
+  })),
+
+  focusApp: (id) => set((state) => {
+    const maxZ = Math.max(0, ...state.windows.map(w => w.zIndex));
+    return {
+      windows: state.windows.map(w => w.id === id ? { ...w, zIndex: maxZ + 1, isMinimized: false } : w),
+      activeWindowId: id
+    };
+  })
+}));

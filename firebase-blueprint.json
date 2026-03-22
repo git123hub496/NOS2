@@ -1,0 +1,43 @@
+{
+  "entities": {
+    "User": {
+      "title": "User Profile",
+      "description": "Stores user-specific profile data and OS preferences.",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "description": "Unique identifier for the user." },
+        "displayName": { "type": "string", "description": "Public name of the user." },
+        "email": { "type": "string", "format": "email", "description": "User's email address." },
+        "isLiteMode": { "type": "boolean", "description": "Whether the user has LITE mode enabled." },
+        "wallpaper": { "type": "string", "format": "uri", "description": "URL of the user's desktop wallpaper." },
+        "createdAt": { "type": "string", "format": "date-time", "description": "When the account was created." }
+      },
+      "required": ["uid", "email"]
+    },
+    "File": {
+      "title": "System File",
+      "description": "Represents a file or folder in the user's virtual file system.",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string", "description": "Name of the file or folder." },
+        "type": { "type": "string", "enum": ["file", "folder"], "description": "Type of the item." },
+        "content": { "type": "string", "description": "Content of the file (if type is file)." },
+        "parentId": { "type": "string", "description": "ID of the parent folder (null for root)." },
+        "ownerId": { "type": "string", "description": "UID of the user who owns this file." },
+        "size": { "type": "string", "description": "Human-readable size of the file." },
+        "updatedAt": { "type": "string", "format": "date-time", "description": "Last modification time." }
+      },
+      "required": ["name", "type", "ownerId"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "User",
+      "description": "User profile and preferences."
+    },
+    "/users/{userId}/files/{fileId}": {
+      "schema": "File",
+      "description": "User's virtual file system."
+    }
+  }
+}
