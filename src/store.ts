@@ -3,7 +3,7 @@ import { auth, db, handleFirestoreError, OperationType } from './firebase';
 import { doc, getDoc, setDoc, updateDoc, onSnapshot, Timestamp } from 'firebase/firestore';
 import { onAuthStateChanged, User as FirebaseUser } from 'firebase/auth';
 
-export type AppId = 'explorer' | 'settings' | 'terminal' | 'browser' | 'ai' | 'notepad' | 'docs' | 'slides' | 'process-manager' | 'search' | 'store' | 'pay' | 'health';
+export type AppId = 'explorer' | 'settings' | 'terminal' | 'browser' | 'ai' | 'notepad' | 'docs' | 'slides' | 'process-manager' | 'search' | 'store' | 'pay' | 'health' | 'phone' | 'recycle-bin' | 'mail' | 'maps' | 'calendar' | 'calculator' | 'shop' | 'themes' | 'games' | 'minesweeper' | 'update' | 'chat' | 'info' | 'camera' | 'tv' | 'sticky-notes' | 'fonts' | 'car';
 export type TaskbarPosition = 'bottom' | 'left' | 'right' | 'top';
 
 export interface Process {
@@ -57,10 +57,27 @@ interface OSStore {
   isGrayscale: boolean;
   isInverted: boolean;
   isQuickSettingsOpen: boolean;
+  isWidgetsOpen: boolean;
+  isChatOpen: boolean;
+  
+  // Theme & Transparency
+  isDarkMode: boolean;
+  taskbarTransparency: number;
+  windowTransparency: number;
+  isTaskbarAutohide: boolean;
+  
+  // Cursor Scale
+  cursorScale: number;
+  
+  // System Update
+  isUpdating: boolean;
+  updateProgress: number;
+  updateStatus: string;
   
   // Taskbar & Customization
   taskbarPosition: TaskbarPosition;
   pinnedAppIds: AppId[];
+  pinnedStartAppIds: AppId[];
   isRestarting: boolean;
   isShutDown: boolean;
 
@@ -91,13 +108,22 @@ interface OSStore {
   toggleGrayscale: () => void;
   toggleInvert: () => void;
   toggleQuickSettings: () => void;
+  toggleWidgets: () => void;
+  toggleChat: () => void;
   factoryReset: () => Promise<void>;
   killProcess: (processId: string) => void;
   setTaskbarPosition: (pos: TaskbarPosition) => void;
   togglePinApp: (id: AppId) => void;
+  togglePinStartApp: (id: AppId) => void;
   restart: () => void;
   powerOff: () => void;
   setVolume: (v: number) => void;
+  setDarkMode: (enabled: boolean) => void;
+  setTaskbarTransparency: (v: number) => void;
+  setWindowTransparency: (v: number) => void;
+  setTaskbarAutohide: (enabled: boolean) => void;
+  setCursorScale: (scale: number) => void;
+  startUpdate: () => void;
   setNetwork: (id: string) => void;
   addSavedUser: (user: User) => void;
   removeSavedUser: (uid: string) => void;
@@ -123,9 +149,22 @@ export const useOSStore = create<OSStore>((set, get) => ({
   isGrayscale: false,
   isInverted: false,
   isQuickSettingsOpen: false,
+  isWidgetsOpen: false,
+  isChatOpen: false,
+
+  isDarkMode: true,
+  taskbarTransparency: 80,
+  windowTransparency: 80,
+  isTaskbarAutohide: false,
+
+  cursorScale: 1,
+  isUpdating: false,
+  updateProgress: 0,
+  updateStatus: 'System is up to date',
 
   taskbarPosition: 'bottom',
   pinnedAppIds: ['explorer', 'browser', 'terminal', 'ai'],
+  pinnedStartAppIds: ['store', 'explorer', 'settings', 'ai', 'notepad', 'calculator', 'browser', 'recycle-bin', 'mail', 'maps', 'process-manager', 'calendar'],
   isRestarting: false,
   isShutDown: false,
 
@@ -192,9 +231,55 @@ export const useOSStore = create<OSStore>((set, get) => ({
   
   toggleGrayscale: () => set(state => ({ isGrayscale: !state.isGrayscale })),
   toggleInvert: () => set(state => ({ isInverted: !state.isInverted })),
-  toggleQuickSettings: () => set(state => ({ isQuickSettingsOpen: !state.isQuickSettingsOpen })),
+  toggleQuickSettings: () => set(state => ({ 
+    isQuickSettingsOpen: !state.isQuickSettingsOpen,
+    isWidgetsOpen: false,
+    isChatOpen: false
+  })),
+  toggleWidgets: () => set(state => ({ 
+    isWidgetsOpen: !state.isWidgetsOpen,
+    isChatOpen: false,
+    isQuickSettingsOpen: false
+  })),
+  toggleChat: () => set(state => ({ 
+    isChatOpen: !state.isChatOpen,
+    isWidgetsOpen: false,
+    isQuickSettingsOpen: false
+  })),
 
   setVolume: (v) => set({ volume: v }),
+  setDarkMode: (enabled) => set({ isDarkMode: enabled }),
+  setTaskbarAutohide: (enabled) => set({ isTaskbarAutohide: enabled }),
+  setTaskbarTransparency: (v) => set({ taskbarTransparency: v }),
+  setWindowTransparency: (v) => set({ windowTransparency: v }),
+  setCursorScale: (scale) => set({ cursorScale: Math.max(0.5, Math.min(4, scale)) }),
+
+  startUpdate: () => {
+    const { isUpdating } = get();
+    if (isUpdating) return;
+
+    set({ isUpdating: true, updateProgress: 0, updateStatus: 'Downloading Nebula OS 2.1...' });
+    
+    let progress = 0;
+    const interval = setInterval(() => {
+      progress += Math.random() * 5;
+      if (progress >= 100) {
+        progress = 100;
+        clearInterval(interval);
+        set({ updateProgress: 100, updateStatus: 'Update complete. Restarting...' });
+        setTimeout(() => {
+          get().restart();
+          set({ isUpdating: false, updateProgress: 0, updateStatus: 'System is up to date' });
+        }, 2000);
+      } else {
+        set({ 
+          updateProgress: progress, 
+          updateStatus: progress > 70 ? 'Installing components...' : (progress > 40 ? 'Verifying files...' : 'Downloading Nebula OS 2.1...') 
+        });
+      }
+    }, 200);
+  },
+
   setNetwork: (id) => set({ selectedNetwork: get().networks.find(n => n.id === id)?.name || 'Disconnected' }),
 
   setTaskbarPosition: async (pos) => {
@@ -221,6 +306,23 @@ export const useOSStore = create<OSStore>((set, get) => ({
       const path = `users/${user.uid}`;
       try {
         await updateDoc(doc(db, path), { pinnedAppIds: newPinned });
+      } catch (error) {
+        handleFirestoreError(error, OperationType.UPDATE, path);
+      }
+    }
+  },
+
+  togglePinStartApp: async (id) => {
+    const { pinnedStartAppIds, user } = get();
+    const newPinned = pinnedStartAppIds.includes(id) 
+      ? pinnedStartAppIds.filter(p => p !== id)
+      : [...pinnedStartAppIds, id];
+    
+    set({ pinnedStartAppIds: newPinned });
+    if (user) {
+      const path = `users/${user.uid}`;
+      try {
+        await updateDoc(doc(db, path), { pinnedStartAppIds: newPinned });
       } catch (error) {
         handleFirestoreError(error, OperationType.UPDATE, path);
       }
@@ -337,7 +439,8 @@ export const useOSStore = create<OSStore>((set, get) => ({
           accentColor: data.accentColor ?? '#3b82f6',
           fontStyle: data.fontStyle ?? 'sans',
           taskbarPosition: data.taskbarPosition ?? 'bottom',
-          pinnedAppIds: data.pinnedAppIds ?? ['explorer', 'browser', 'terminal', 'ai']
+          pinnedAppIds: data.pinnedAppIds ?? ['explorer', 'browser', 'terminal', 'ai'],
+          pinnedStartAppIds: data.pinnedStartAppIds ?? ['store', 'explorer', 'settings', 'ai', 'notepad', 'calculator', 'browser', 'recycle-bin', 'mail', 'maps', 'process-manager', 'calendar']
         });
       } else {
         // Initialize user document
@@ -352,6 +455,7 @@ export const useOSStore = create<OSStore>((set, get) => ({
           fontStyle: 'sans',
           taskbarPosition: 'bottom',
           pinnedAppIds: ['explorer', 'browser', 'terminal', 'ai'],
+          pinnedStartAppIds: ['store', 'explorer', 'settings', 'ai', 'notepad', 'calculator', 'browser', 'recycle-bin', 'mail', 'maps', 'process-manager', 'calendar'],
           createdAt: Timestamp.now()
         });
         set({ isSetupComplete: false });

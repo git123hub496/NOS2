@@ -18,7 +18,8 @@ export default function App() {
     isBooted, isLoggedIn, boot, setUser, setAuthReady, isAuthReady, syncSettings,
     isGrayscale, isInverted, toggleGrayscale, toggleInvert, isRestarting,
     isShutDown, isSetupComplete, loginLocal, accentColor, fontStyle,
-    savedUsers, removeSavedUser
+    savedUsers, removeSavedUser, cursorScale, setCursorScale,
+    taskbarTransparency, windowTransparency, isDarkMode
   } = useOSStore();
   const [isLoggingIn, setIsLoggingIn] = useState(false);
   const [showLocalLogin, setShowLocalLogin] = useState(false);
@@ -36,11 +37,19 @@ export default function App() {
           e.preventDefault();
           toggleInvert();
         }
+        if (e.key === '+' || e.key === '=') {
+          e.preventDefault();
+          setCursorScale(cursorScale + 0.2);
+        }
+        if (e.key === '-' || e.key === '_') {
+          e.preventDefault();
+          setCursorScale(cursorScale - 0.2);
+        }
       }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [toggleGrayscale, toggleInvert]);
+  }, [toggleGrayscale, toggleInvert, cursorScale, setCursorScale]);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
@@ -96,8 +105,15 @@ export default function App() {
     filter: `${isGrayscale ? 'grayscale(100%)' : ''} ${isInverted ? 'invert(100%)' : ''}`.trim()
   };
 
+  const cursorSize = 32 * cursorScale;
+  const cursorSvg = `%3Csvg width='${cursorSize}' height='${cursorSize}' viewBox='0 0 32 32' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M8 4V25L13.5 19.5L17.5 28.5L20.5 27L16.5 18H23L8 4Z' fill='white' stroke='black' stroke-width='2.5' stroke-linejoin='round'/%3E%3C/svg%3E`;
+
   const themeStyle = {
     '--os-accent': accentColor,
+    '--os-bg': isDarkMode ? '#0a0a0a' : '#f0f2f5',
+    '--cursor-url': `url("data:image/svg+xml,${cursorSvg}")`,
+    '--taskbar-opacity': taskbarTransparency / 100,
+    '--window-opacity': windowTransparency / 100,
     '--font-family-custom': fontStyle === 'sans' ? '"Inter", ui-sans-serif, system-ui, sans-serif' :
                   fontStyle === 'mono' ? '"JetBrains Mono", ui-monospace, SFMono-Regular, monospace' :
                   fontStyle === 'display' ? '"Space Grotesk", sans-serif' :

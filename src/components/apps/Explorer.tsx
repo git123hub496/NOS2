@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { Folder, File, ChevronRight, Search, HardDrive, Download, Clock, Star, Plus, Trash2, Monitor } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { Folder, File, ChevronRight, Search, HardDrive, Download, Upload, Clock, Star, Plus, Trash2, Monitor } from 'lucide-react';
 import { db, handleFirestoreError, OperationType } from '../../firebase';
 import { collection, onSnapshot, addDoc, deleteDoc, doc, Timestamp, query, orderBy } from 'firebase/firestore';
 import { useOSStore } from '../../store';
@@ -21,6 +21,8 @@ const Explorer: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [selectedFile, setSelectedFile] = useState<FileItem | null>(null);
   const [showPreview, setShowPreview] = useState(true);
+  const [isDragging, setIsDragging] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   
   useEffect(() => {
     if (!user) return;
@@ -70,6 +72,67 @@ const Explorer: React.FC = () => {
       if (selectedFile?.id === id) setSelectedFile(null);
     } catch (error) {
       handleFirestoreError(error, OperationType.DELETE, path);
+    }
+  };
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !user) return;
+    uploadFile(file);
+    // Reset input
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  };
+
+  const uploadFile = async (file: File) => {
+    if (!user) return;
+
+    if (file.size > 1024 * 1024) {
+      console.error("File is too large. Maximum size is 1MB.");
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = async (event) => {
+      const content = event.target?.result as string;
+      const path = `users/${user.uid}/files`;
+      
+      try {
+        await addDoc(collection(db, path), {
+          name: file.name,
+          type: 'file',
+          ownerId: user.uid,
+          size: `${Math.round(file.size / 1024)} KB`,
+          content: content,
+          updatedAt: Timestamp.now(),
+          date: new Date().toISOString().split('T')[0]
+        });
+      } catch (error) {
+        handleFirestoreError(error, OperationType.CREATE, path);
+      }
+    };
+
+    if (file.type.startsWith('image/')) {
+      reader.readAsDataURL(file);
+    } else {
+      reader.readAsText(file);
+    }
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = () => {
+    setIsDragging(false);
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+    const files = e.dataTransfer.files;
+    if (files.length > 0) {
+      uploadFile(files[0]);
     }
   };
 
@@ -137,6 +200,13 @@ const Explorer: React.FC = () => {
           <div className="w-px h-4 bg-white/10 mx-1" />
           <button onClick={() => createFile('folder')} className="p-1 hover:bg-white/10 rounded" title="New Folder"><Plus size={16} /></button>
           <button onClick={() => createFile('file')} className="p-1 hover:bg-white/10 rounded" title="New File"><File size={14} /></button>
+          <button onClick={() => fileInputRef.current?.click()} className="p-1 hover:bg-white/10 rounded" title="Upload File"><Upload size={16} /></button>
+          <input 
+            type="file" 
+            ref={fileInputRef} 
+            onChange={handleFileUpload} 
+            className="hidden" 
+          />
         </div>
         <div className="flex-1 bg-white/5 border border-white/10 rounded px-3 py-1 text-xs text-gray-400 flex items-center gap-2">
           <HardDrive size={14} />
@@ -182,7 +252,12 @@ const Explorer: React.FC = () => {
         </div>
 
         {/* File List */}
-        <div className="flex-1 overflow-auto p-4">
+        <div 
+          className={`flex-1 overflow-auto p-4 transition-colors ${isDragging ? 'bg-blue-500/10' : ''}`}
+          onDragOver={handleDragOver}
+          onDragLeave={handleDragLeave}
+          onDrop={handleDrop}
+        >
           {isLoading ? (
             <div className="flex items-center justify-center h-full text-gray-500 text-xs">
               Loading file system...

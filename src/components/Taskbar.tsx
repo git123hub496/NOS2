@@ -20,7 +20,22 @@ import {
   User as UserIcon,
   ShoppingBag,
   CreditCard,
-  Heart
+  Heart,
+  Trash2,
+  Mail,
+  Map,
+  Calculator as CalculatorIcon,
+  Palette,
+  Gamepad2,
+  Bomb,
+  RefreshCw,
+  MessageCircle,
+  Info,
+  Camera,
+  Tv,
+  StickyNote,
+  Type,
+  Car
 } from 'lucide-react';
 import { useOSStore, AppId } from '../store';
 import StartMenu from './StartMenu';
@@ -32,11 +47,13 @@ const Taskbar: React.FC = () => {
     windows, openApp, focusApp, activeWindowId, isLiteMode, 
     toggleQuickSettings, isQuickSettingsOpen,
     taskbarPosition, setTaskbarPosition, pinnedAppIds, togglePinApp,
-    user
+    user, toggleWidgets, toggleChat, isWidgetsOpen, isChatOpen,
+    taskbarTransparency, isTaskbarAutohide
   } = useOSStore();
   const [isStartOpen, setIsStartOpen] = useState(false);
   const [time, setTime] = useState(new Date());
   const [contextMenu, setContextMenu] = useState<{ x: number, y: number } | null>(null);
+  const [isHovered, setIsHovered] = useState(false);
 
   React.useEffect(() => {
     const timer = setInterval(() => setTime(new Date()), 1000);
@@ -49,10 +66,28 @@ const Taskbar: React.FC = () => {
     { id: 'explorer', name: 'File Explorer', icon: <FileText size={20} />, color: 'text-yellow-500' },
     { id: 'store', name: 'App Store', icon: <ShoppingBag size={20} />, color: 'text-pink-500' },
     { id: 'ai', name: 'Nebulabs AI', icon: <Sparkles size={20} />, color: 'text-purple-500' },
-    { id: 'pay', name: 'Nebula Pay', icon: <CreditCard size={20} />, color: 'text-indigo-400' },
-    { id: 'health', name: 'Health', icon: <Heart size={20} />, color: 'text-red-400' },
-    { id: 'terminal', name: 'Terminal', icon: <TerminalIcon size={20} />, color: 'text-green-500' },
+    { id: 'mail', name: 'Nebula Mail', icon: <Mail size={20} />, color: 'text-blue-300' },
+    { id: 'maps', name: 'Nebula Maps', icon: <Map size={20} />, color: 'text-green-500' },
+    { id: 'calendar', name: 'Calendar', icon: <Calendar size={20} />, color: 'text-red-400' },
+    { id: 'calculator', name: 'Calculator', icon: <CalculatorIcon size={20} />, color: 'text-orange-500' },
+    { id: 'notepad', name: 'Notes', icon: <FileText size={20} />, color: 'text-blue-400' },
+    { id: 'recycle-bin', name: 'Recycle Bin', icon: <Trash2 size={20} />, color: 'text-gray-500' },
+    { id: 'process-manager', name: 'System Monitor', icon: <Activity size={20} />, color: 'text-red-500' },
     { id: 'settings', name: 'Settings', icon: <SettingsIcon size={20} />, color: 'text-gray-400' },
+    { id: 'terminal', name: 'Terminal', icon: <TerminalIcon size={20} />, color: 'text-green-500' },
+    { id: 'phone', name: 'Nebula Phone', icon: <Smartphone size={20} />, color: 'text-green-400' },
+    { id: 'shop', name: 'Shop Nebulabs', icon: <ShoppingBag size={20} />, color: 'text-pink-400' },
+    { id: 'themes', name: 'Themes', icon: <Palette size={20} />, color: 'text-purple-400' },
+    { id: 'games', name: 'Nebula Games', icon: <Gamepad2 size={20} />, color: 'text-indigo-400' },
+    { id: 'minesweeper', name: 'Minesweeper', icon: <Bomb size={20} />, color: 'text-gray-400' },
+    { id: 'update', name: 'System Update', icon: <RefreshCw size={20} />, color: 'text-blue-400' },
+    { id: 'chat', name: 'Nebula Chat', icon: <MessageCircle size={20} />, color: 'text-green-400' },
+    { id: 'info', name: 'System Info', icon: <Info size={20} />, color: 'text-blue-300' },
+    { id: 'camera', name: 'Nebula Camera', icon: <Camera size={20} />, color: 'text-gray-300' },
+    { id: 'tv', name: 'Nebula TV', icon: <Tv size={20} />, color: 'text-red-500' },
+    { id: 'sticky-notes', name: 'Sticky Notes', icon: <StickyNote size={20} />, color: 'text-yellow-400' },
+    { id: 'fonts', name: 'Fonts', icon: <Type size={20} />, color: 'text-gray-200' },
+    { id: 'car', name: 'Nebula Drive', icon: <Car size={20} />, color: 'text-gray-400' },
   ];
 
   const pinnedApps = allApps.filter(app => pinnedAppIds.includes(app.id));
@@ -60,10 +95,21 @@ const Taskbar: React.FC = () => {
 
   const handleContextMenu = (e: React.MouseEvent) => {
     e.preventDefault();
-    setContextMenu({ x: e.clientX, y: e.clientY });
+    const menuWidth = 192; // w-48
+    const menuHeight = 160; // Approx height for 4 options + header
+    
+    let x = e.clientX;
+    let y = e.clientY;
+    
+    // Keep within viewport
+    if (x + menuWidth > window.innerWidth) x = window.innerWidth - menuWidth - 10;
+    if (y + menuHeight > window.innerHeight) y = window.innerHeight - menuHeight - 10;
+    
+    setContextMenu({ x, y });
   };
 
   const isVertical = taskbarPosition === 'left' || taskbarPosition === 'right';
+  const isHidden = isTaskbarAutohide && !isHovered && !isStartOpen && !isQuickSettingsOpen;
 
   return (
     <>
@@ -94,7 +140,20 @@ const Taskbar: React.FC = () => {
       
       <div 
         onContextMenu={handleContextMenu}
-        className={`fixed z-[2000] flex items-center justify-between p-2 transition-all duration-300 ${isLiteMode ? 'bg-[#111] border-[#333]' : 'bg-[#0a0a0a]/90 backdrop-blur-md border-white/10'} taskbar-${taskbarPosition}`}
+        onMouseEnter={() => setIsHovered(true)}
+        onMouseLeave={() => setIsHovered(false)}
+        className={`fixed z-[2000] flex items-center justify-between p-2 transition-all duration-300 taskbar-${taskbarPosition} ${isHidden ? 'taskbar-hidden' : ''}`}
+        style={{ 
+          backgroundColor: isLiteMode ? '#111' : `rgba(10, 10, 10, ${taskbarTransparency / 100})`,
+          backdropFilter: isLiteMode ? 'none' : 'blur(12px)',
+          border: isLiteMode ? '1px solid #333' : '1px solid rgba(255, 255, 255, 0.1)',
+          transform: isHidden ? (
+            taskbarPosition === 'bottom' ? 'translateY(calc(100% - 2px))' :
+            taskbarPosition === 'top' ? 'translateY(calc(-100% + 2px))' :
+            taskbarPosition === 'left' ? 'translateX(calc(-100% + 2px))' :
+            'translateX(calc(100% - 2px))'
+          ) : 'none'
+        }}
       >
         <div className={`flex items-center gap-2 ${isVertical ? 'flex-col' : 'flex-row'}`}>
           <button 
@@ -112,9 +171,17 @@ const Taskbar: React.FC = () => {
                   type="text"
                   placeholder="Search Google..."
                   className="bg-white/5 border border-white/10 rounded-full py-1.5 pl-9 pr-4 text-xs text-white outline-none focus:border-blue-500/50 focus:bg-white/10 transition-all w-48"
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      openApp('browser', 'Nebula Browser');
+                    }
+                  }}
                 />
               </div>
-              <button className="p-2 rounded-lg hover:bg-white/10 text-gray-400 transition-colors">
+              <button 
+                onClick={toggleWidgets}
+                className={`p-2 rounded-lg transition-colors ${isWidgetsOpen ? 'bg-blue-600 text-white' : 'hover:bg-white/10 text-gray-400'}`}
+              >
                 <LayoutGrid size={18} />
               </button>
             </div>
@@ -155,8 +222,18 @@ const Taskbar: React.FC = () => {
         <div className={`flex items-center gap-3 px-2 ${isVertical ? 'flex-col' : 'flex-row'}`}>
           {!isVertical && (
             <div className="flex items-center gap-3 text-gray-400 mr-2">
-              <button className="hover:text-white transition-colors"><Smartphone size={16} /></button>
-              <button className="hover:text-white transition-colors"><MessageSquare size={16} /></button>
+              <button 
+                onClick={() => openApp('phone', 'Nebula Phone')}
+                className="hover:text-white transition-colors"
+              >
+                <Smartphone size={16} />
+              </button>
+              <button 
+                onClick={toggleChat}
+                className={`transition-colors ${isChatOpen ? 'text-blue-500' : 'hover:text-white'}`}
+              >
+                <MessageSquare size={16} />
+              </button>
             </div>
           )}
           

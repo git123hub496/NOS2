@@ -1,153 +1,408 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
+import { motion } from 'motion/react';
 import { useOSStore } from '../../store';
-import { Monitor, Cpu, Palette, Zap, Info } from 'lucide-react';
+import { 
+  Monitor, 
+  Cpu, 
+  Palette, 
+  Zap, 
+  Info, 
+  MousePointer2, 
+  RefreshCw, 
+  Search, 
+  LayoutGrid, 
+  Bell, 
+  User, 
+  Shield, 
+  Layers, 
+  Image as ImageIcon, 
+  Upload,
+  Moon,
+  Sun,
+  Check
+} from 'lucide-react';
 
 const Settings: React.FC = () => {
   const { 
     isLiteMode, setLiteMode, wallpaper, setWallpaper, 
-    accentColor, setAccentColor, fontStyle, setFontStyle 
+    accentColor, setAccentColor, fontStyle, setFontStyle,
+    cursorScale, setCursorScale, isUpdating, updateProgress, updateStatus, startUpdate,
+    isDarkMode, setDarkMode, taskbarTransparency, setTaskbarTransparency,
+    windowTransparency, setWindowTransparency, isTaskbarAutohide, setTaskbarAutohide
   } = useOSStore();
 
+  const [activeTab, setActiveTab] = useState('Personalization');
+  const [searchQuery, setSearchQuery] = useState('');
+
+  const sidebarItems = [
+    { id: 'Personalization', icon: <Palette size={18} /> },
+    { id: 'Display', icon: <Monitor size={18} /> },
+    { id: 'Apps', icon: <LayoutGrid size={18} /> },
+    { id: 'Accessibility', icon: <MousePointer2 size={18} /> },
+    { id: 'Notifications', icon: <Bell size={18} /> },
+    { id: 'Accounts', icon: <User size={18} /> },
+    { id: 'Security', icon: <Shield size={18} /> },
+    { id: 'Updates', icon: <RefreshCw size={18} /> },
+    { id: 'About', icon: <Info size={18} /> },
+  ];
+
+  const colors = [
+    { name: 'Purple', color: '#a855f7' },
+    { name: 'Blue', color: '#3b82f6' },
+    { name: 'Red', color: '#ec4899' },
+    { name: 'Orange', color: '#f97316' },
+    { name: 'Green', color: '#22c55e' },
+    { name: 'Slate', color: '#64748b' },
+    { name: 'Dark', color: '#1e293b' }
+  ];
+
+  const wallpapers = [
+    'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe',
+    'https://images.unsplash.com/photo-1451187580459-43490279c0fa',
+    'https://images.unsplash.com/photo-1534796636912-3b95b3ab5986',
+    'https://images.unsplash.com/photo-1502134249126-9f3755a50d78'
+  ];
+
   return (
-    <div className="p-6 text-white font-sans">
-      <div className="flex items-center gap-3 mb-8">
-        <Monitor className="text-blue-500" size={24} />
-        <h2 className="text-xl font-semibold">System Settings</h2>
+    <div className="h-full flex bg-[#0d1117] text-white font-sans overflow-hidden">
+      {/* Sidebar */}
+      <div className="w-64 border-r border-white/5 flex flex-col p-6 gap-6 bg-[#0a0c10]">
+        <div className="space-y-1">
+          <h2 className="text-[10px] font-bold text-blue-500/80 uppercase tracking-[0.2em] mb-6">System Configuration</h2>
+          <div className="relative mb-8">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" size={14} />
+            <input 
+              type="text"
+              placeholder="Search settings..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full bg-white/5 border border-white/10 rounded-xl py-2 pl-10 pr-4 text-xs outline-none focus:border-blue-500/30 transition-all"
+            />
+          </div>
+        </div>
+
+        <nav className="flex-1 space-y-1">
+          {sidebarItems.map((item) => (
+            <button
+              key={item.id}
+              onClick={() => setActiveTab(item.id)}
+              className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm transition-all group ${activeTab === item.id ? 'bg-white/5 text-white font-medium' : 'text-gray-400 hover:text-gray-200 hover:bg-white/5'}`}
+            >
+              <span className={`${activeTab === item.id ? 'text-blue-500' : 'text-gray-500 group-hover:text-gray-400'}`}>
+                {item.icon}
+              </span>
+              {item.id}
+            </button>
+          ))}
+        </nav>
       </div>
 
-      <div className="space-y-6">
-        <section>
-          <h3 className="text-sm font-medium text-gray-400 uppercase tracking-wider mb-4">Performance</h3>
-          <div className="bg-white/5 rounded-lg p-4 border border-white/5">
-            <div className="flex items-center justify-between">
+      {/* Main Content */}
+      <div className="flex-1 overflow-auto custom-scrollbar p-10">
+        {activeTab === 'Personalization' && (
+          <div className="max-w-3xl space-y-12">
+            {/* Theme & Style */}
+            <section className="space-y-6">
               <div className="flex items-center gap-3">
-                <Zap className={isLiteMode ? "text-yellow-500" : "text-gray-400"} size={20} />
-                <div>
-                  <p className="font-medium">LITE Edition</p>
-                  <p className="text-xs text-gray-500">Optimized for older hardware. Disables blurs and animations.</p>
+                <Zap className="text-blue-500" size={20} />
+                <h2 className="text-lg font-bold">Theme & Style</h2>
+              </div>
+
+              <div className="bg-white/5 rounded-3xl p-8 border border-white/5 flex items-center justify-between group hover:bg-white/[0.07] transition-all">
+                <div className="flex items-center gap-6">
+                  <div className="w-12 h-12 rounded-2xl bg-blue-500/10 flex items-center justify-center text-blue-500">
+                    <Moon size={24} />
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-sm">Interface Theme</h3>
+                    <p className="text-xs text-gray-500 mt-1">Switch between light and dark modes</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-4">
+                  <span className={`text-[10px] font-bold tracking-widest ${isDarkMode ? 'text-blue-500' : 'text-gray-600'}`}>DARK</span>
+                  <button 
+                    onClick={() => setDarkMode(!isDarkMode)}
+                    className={`w-12 h-6 rounded-full transition-all relative ${isDarkMode ? 'bg-blue-600' : 'bg-gray-700'}`}
+                  >
+                    <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all ${isDarkMode ? 'left-7' : 'left-1'}`} />
+                  </button>
+                  <span className={`text-[10px] font-bold tracking-widest ${!isDarkMode ? 'text-blue-500' : 'text-gray-600'}`}>LIGHT</span>
                 </div>
               </div>
-              <button 
-                onClick={() => setLiteMode(!isLiteMode)}
-                className={`w-12 h-6 rounded-full transition-colors relative ${isLiteMode ? 'bg-blue-500' : 'bg-gray-700'}`}
-              >
-                <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all ${isLiteMode ? 'left-7' : 'left-1'}`} />
-              </button>
-            </div>
-          </div>
-        </section>
 
-        <section>
-          <h3 className="text-sm font-medium text-gray-400 uppercase tracking-wider mb-4">Theme</h3>
-          <div className="grid grid-cols-2 gap-4">
-            <div className="bg-white/5 rounded-lg p-4 border border-white/5">
-              <div className="flex items-center gap-3 mb-4">
-                <Palette className="text-blue-500" size={20} />
-                <p className="font-medium text-sm">Accent Color</p>
+              <div className="space-y-4">
+                <h3 className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Accent Color</h3>
+                <div className="flex flex-wrap gap-4">
+                  {colors.map((c) => (
+                    <button
+                      key={c.color}
+                      onClick={() => setAccentColor(c.color)}
+                      className={`w-16 h-16 rounded-2xl transition-all relative flex items-center justify-center ${accentColor === c.color ? 'ring-2 ring-white ring-offset-4 ring-offset-[#0d1117] scale-105' : 'hover:scale-105'}`}
+                      style={{ backgroundColor: c.color }}
+                    >
+                      {accentColor === c.color && <Check size={24} className="text-white" />}
+                    </button>
+                  ))}
+                </div>
               </div>
-              <div className="flex flex-wrap gap-3">
-                {[
-                  { name: 'Blue', color: '#3b82f6' },
-                  { name: 'Purple', color: '#a855f7' },
-                  { name: 'Green', color: '#22c55e' },
-                  { name: 'Pink', color: '#ec4899' },
-                  { name: 'Orange', color: '#f97316' },
-                  { name: 'Red', color: '#ef4444' }
-                ].map((c) => (
-                  <button
-                    key={c.color}
-                    onClick={() => setAccentColor(c.color)}
-                    className={`w-8 h-8 rounded-full border-2 transition-all ${accentColor === c.color ? 'border-white scale-110 shadow-lg shadow-white/10' : 'border-transparent hover:scale-105'}`}
-                    style={{ backgroundColor: c.color }}
-                    title={c.name}
-                  />
-                ))}
-              </div>
-            </div>
+            </section>
 
-            <div className="bg-white/5 rounded-lg p-4 border border-white/5">
-              <div className="flex items-center gap-3 mb-4">
-                <Monitor className="text-indigo-500" size={20} />
-                <p className="font-medium text-sm">Font Style</p>
+            {/* Interface Transparency */}
+            <section className="space-y-6">
+              <div className="flex items-center gap-3">
+                <Layers className="text-blue-500" size={20} />
+                <h2 className="text-lg font-bold">Interface Transparency</h2>
               </div>
-              <div className="space-y-2">
-                {[
-                  { id: 'sans', name: 'Standard (Inter)', font: 'font-sans' },
-                  { id: 'mono', name: 'Technical (Mono)', font: 'font-mono' },
-                  { id: 'display', name: 'Modern (Display)', font: 'font-display' },
-                  { id: 'serif', name: 'Classic (Serif)', font: 'font-serif' }
-                ].map((f) => (
-                  <button
-                    key={f.id}
-                    onClick={() => setFontStyle(f.id)}
-                    className={`w-full text-left px-3 py-2 rounded-md text-xs transition-all ${fontStyle === f.id ? 'bg-blue-500 text-white' : 'bg-white/5 text-gray-400 hover:bg-white/10'}`}
+
+              <div className="bg-white/5 rounded-3xl p-8 border border-white/5 space-y-8">
+                <div className="space-y-4">
+                  <div className="flex justify-between items-center">
+                    <h3 className="text-sm font-medium">Taskbar Transparency</h3>
+                    <span className="text-xs font-mono text-blue-500">{taskbarTransparency}%</span>
+                  </div>
+                  <div className="flex items-center gap-4">
+                    <input 
+                      type="range"
+                      min="0"
+                      max="100"
+                      value={taskbarTransparency}
+                      onChange={(e) => setTaskbarTransparency(parseInt(e.target.value))}
+                      className="flex-1 h-1 bg-white/10 rounded-full appearance-none cursor-pointer accent-blue-500"
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-4">
+                  <div className="flex justify-between items-center">
+                    <h3 className="text-sm font-medium">App Window Transparency</h3>
+                    <span className="text-xs font-mono text-blue-500">{windowTransparency}%</span>
+                  </div>
+                  <div className="flex items-center gap-4">
+                    <input 
+                      type="range"
+                      min="0"
+                      max="100"
+                      value={windowTransparency}
+                      onChange={(e) => setWindowTransparency(parseInt(e.target.value))}
+                      className="flex-1 h-1 bg-white/10 rounded-full appearance-none cursor-pointer accent-blue-500"
+                    />
+                  </div>
+                </div>
+
+                <div className="pt-4 border-t border-white/5 flex items-center justify-between">
+                  <div className="space-y-1">
+                    <h3 className="text-sm font-medium">Auto-hide Taskbar</h3>
+                    <p className="text-[10px] text-gray-500">Hide taskbar when not in use</p>
+                  </div>
+                  <button 
+                    onClick={() => setTaskbarAutohide(!isTaskbarAutohide)}
+                    className={`w-10 h-5 rounded-full transition-colors relative ${isTaskbarAutohide ? 'bg-blue-600' : 'bg-white/10'}`}
                   >
-                    <span className={f.font}>{f.name}</span>
+                    <div className={`absolute top-1 w-3 h-3 bg-white rounded-full transition-all ${isTaskbarAutohide ? 'left-6' : 'left-1'}`} />
                   </button>
-                ))}
+                </div>
               </div>
-            </div>
-          </div>
-        </section>
+            </section>
 
-        <section>
-          <h3 className="text-sm font-medium text-gray-400 uppercase tracking-wider mb-4">Personalization</h3>
-          <div className="grid grid-cols-2 gap-4">
-            <div className="bg-white/5 rounded-lg p-4 border border-white/5">
-              <div className="flex items-center gap-3 mb-3">
-                <Palette className="text-purple-500" size={20} />
-                <p className="font-medium text-sm">Wallpaper</p>
+            {/* Desktop Wallpaper */}
+            <section className="space-y-6">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <ImageIcon className="text-blue-500" size={20} />
+                  <h2 className="text-lg font-bold">Desktop Wallpaper</h2>
+                </div>
+                <button className="flex items-center gap-2 px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-[10px] font-bold uppercase tracking-widest hover:bg-white/10 transition-all">
+                  <Upload size={14} />
+                  Upload Background
+                </button>
               </div>
-              <div className="aspect-video rounded bg-gray-800 overflow-hidden border border-white/10 mb-3">
-                <img src={wallpaper} alt="Current wallpaper" className="w-full h-full object-cover" />
-              </div>
-              <div className="grid grid-cols-4 gap-2">
-                {[
-                  'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe',
-                  'https://images.unsplash.com/photo-1451187580459-43490279c0fa',
-                  'https://images.unsplash.com/photo-1534796636912-3b95b3ab5986',
-                  'https://images.unsplash.com/photo-1502134249126-9f3755a50d78'
-                ].map((url, i) => (
+
+              <div className="grid grid-cols-3 gap-4">
+                {wallpapers.map((url, i) => (
                   <button 
                     key={i}
                     onClick={() => setWallpaper(`${url}?q=80&w=2564&auto=format&fit=crop`)}
-                    className="aspect-square rounded border border-white/10 overflow-hidden hover:border-blue-500 transition-colors"
+                    className={`aspect-video rounded-2xl overflow-hidden border-2 transition-all ${wallpaper.includes(url) ? 'border-blue-500 scale-105 shadow-xl shadow-blue-500/10' : 'border-transparent hover:border-white/20'}`}
                   >
-                    <img src={`${url}?q=40&w=200&auto=format&fit=crop`} className="w-full h-full object-cover" />
+                    <img src={`${url}?q=40&w=400&auto=format&fit=crop`} className="w-full h-full object-cover" />
                   </button>
                 ))}
               </div>
-            </div>
-            
-            <div className="bg-white/5 rounded-lg p-4 border border-white/5">
-              <div className="flex items-center gap-3 mb-3">
-                <Cpu className="text-green-500" size={20} />
-                <p className="font-medium text-sm">System Info</p>
-              </div>
-              <div className="space-y-2 text-xs text-gray-400">
-                <div className="flex justify-between">
-                  <span>OS Name</span>
-                  <span className="text-white">Nebulabs OS 2</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Version</span>
-                  <span className="text-white">2.0.4-stable</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Kernel</span>
-                  <span className="text-white">v6.12.0-neb</span>
-                </div>
-              </div>
-            </div>
+            </section>
           </div>
-        </section>
+        )}
 
-        <section className="pt-4 border-t border-white/5">
-          <div className="flex items-center gap-2 text-gray-500 text-xs">
-            <Info size={14} />
-            <p>Nebulabs OS 2 is a product of Nebulabs Corp. All rights reserved.</p>
+        {activeTab === 'Display' && (
+          <div className="max-w-3xl space-y-12">
+            <section className="space-y-6">
+              <div className="flex items-center gap-3">
+                <Monitor className="text-blue-500" size={20} />
+                <h2 className="text-lg font-bold">Display Settings</h2>
+              </div>
+
+              <div className="bg-white/5 rounded-3xl p-8 border border-white/5 space-y-8">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className="font-bold text-sm">Lite Mode</h3>
+                    <p className="text-xs text-gray-500 mt-1">Disable transparency and blur for better performance</p>
+                  </div>
+                  <button 
+                    onClick={() => setLiteMode(!isLiteMode)}
+                    className={`w-12 h-6 rounded-full transition-all relative ${isLiteMode ? 'bg-blue-600' : 'bg-gray-700'}`}
+                  >
+                    <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all ${isLiteMode ? 'left-7' : 'left-1'}`} />
+                  </button>
+                </div>
+
+                <div className="space-y-4">
+                  <h3 className="text-sm font-medium">Font Style</h3>
+                  <div className="grid grid-cols-2 gap-4">
+                    {(['sans', 'mono', 'display', 'serif'] as const).map((style) => (
+                      <button
+                        key={style}
+                        onClick={() => setFontStyle(style)}
+                        className={`p-4 rounded-xl border transition-all text-left ${fontStyle === style ? 'bg-blue-600/10 border-blue-500 text-blue-500' : 'bg-white/5 border-white/10 text-gray-400 hover:bg-white/10'}`}
+                      >
+                        <p className={`text-lg capitalize font-${style}`}>Nebula OS</p>
+                        <p className="text-[10px] uppercase tracking-widest mt-1 opacity-60">{style}</p>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </section>
           </div>
-        </section>
+        )}
+
+        {activeTab === 'Accessibility' && (
+          <div className="max-w-3xl space-y-12">
+            <section className="space-y-6">
+              <div className="flex items-center gap-3">
+                <MousePointer2 className="text-blue-500" size={20} />
+                <h2 className="text-lg font-bold">Accessibility</h2>
+              </div>
+
+              <div className="bg-white/5 rounded-3xl p-8 border border-white/5 space-y-8">
+                <div className="space-y-4">
+                  <div className="flex justify-between items-center">
+                    <div>
+                      <h3 className="text-sm font-medium">Cursor Scale</h3>
+                      <p className="text-xs text-gray-500 mt-1">Adjust the size of the system cursor</p>
+                    </div>
+                    <span className="text-xs font-mono text-blue-500">{cursorScale.toFixed(1)}x</span>
+                  </div>
+                  <div className="flex items-center gap-4">
+                    <input 
+                      type="range"
+                      min="0.5"
+                      max="3"
+                      step="0.1"
+                      value={cursorScale}
+                      onChange={(e) => setCursorScale(parseFloat(e.target.value))}
+                      className="flex-1 h-1 bg-white/10 rounded-full appearance-none cursor-pointer accent-blue-500"
+                    />
+                  </div>
+                  <p className="text-[10px] text-gray-500 italic">Shortcut: Alt + and Alt - to scale cursor anywhere.</p>
+                </div>
+              </div>
+            </section>
+          </div>
+        )}
+
+        {activeTab === 'Updates' && (
+          <div className="max-w-3xl space-y-12">
+            <section className="space-y-6">
+              <div className="flex items-center gap-3">
+                <RefreshCw className="text-blue-500" size={20} />
+                <h2 className="text-lg font-bold">Nebula Update</h2>
+              </div>
+
+              <div className="bg-white/5 rounded-3xl p-10 border border-white/5 flex flex-col items-center text-center space-y-6">
+                <div className={`w-20 h-20 rounded-full flex items-center justify-center ${isUpdating ? 'bg-blue-500/10 text-blue-500 animate-spin' : 'bg-green-500/10 text-green-500'}`}>
+                  <RefreshCw size={40} />
+                </div>
+                
+                <div>
+                  <h3 className="text-xl font-bold">{isUpdating ? 'Updating Nebula OS...' : 'You\'re up to date'}</h3>
+                  <p className="text-sm text-gray-500 mt-2">
+                    {isUpdating ? `Downloading version 2.4.1 - ${updateStatus}` : 'Last checked: Today, 10:42 PM'}
+                  </p>
+                </div>
+
+                {isUpdating ? (
+                  <div className="w-full max-w-md space-y-2">
+                    <div className="h-2 bg-white/10 rounded-full overflow-hidden">
+                      <motion.div 
+                        className="h-full bg-blue-500"
+                        initial={{ width: 0 }}
+                        animate={{ width: `${updateProgress}%` }}
+                      />
+                    </div>
+                    <p className="text-[10px] font-mono text-gray-500">{updateProgress}% complete</p>
+                  </div>
+                ) : (
+                  <button 
+                    onClick={startUpdate}
+                    className="px-8 py-3 bg-blue-600 hover:bg-blue-700 rounded-2xl font-bold text-sm transition-all shadow-lg shadow-blue-600/20"
+                  >
+                    Check for Updates
+                  </button>
+                )}
+              </div>
+            </section>
+          </div>
+        )}
+
+        {activeTab === 'About' && (
+          <div className="max-w-3xl space-y-12">
+            <section className="space-y-6">
+              <div className="flex items-center gap-3">
+                <Info className="text-blue-500" size={20} />
+                <h2 className="text-lg font-bold">About Nebula OS</h2>
+              </div>
+
+              <div className="bg-white/5 rounded-3xl p-8 border border-white/5 space-y-8">
+                <div className="flex items-center gap-8">
+                  <div className="w-24 h-24 rounded-3xl bg-gradient-to-br from-blue-600 to-purple-600 flex items-center justify-center shadow-2xl">
+                    <Cpu size={48} className="text-white" />
+                  </div>
+                  <div>
+                    <h3 className="text-2xl font-bold">Nebula OS 2</h3>
+                    <p className="text-sm text-gray-400">Version 2.4.0 (Stable Build)</p>
+                    <p className="text-xs text-blue-500 mt-1 font-medium">Nebulabs Corporation</p>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-6 pt-6 border-t border-white/5">
+                  <div className="space-y-1">
+                    <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Processor</p>
+                    <p className="text-sm font-medium">Nebula Core v4 @ 3.8GHz</p>
+                  </div>
+                  <div className="space-y-1">
+                    <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Memory</p>
+                    <p className="text-sm font-medium">32GB Virtual RAM</p>
+                  </div>
+                  <div className="space-y-1">
+                    <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Graphics</p>
+                    <p className="text-sm font-medium">Nebula Vision G2</p>
+                  </div>
+                  <div className="space-y-1">
+                    <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Storage</p>
+                    <p className="text-sm font-medium">1TB Cloud SSD</p>
+                  </div>
+                </div>
+              </div>
+            </section>
+          </div>
+        )}
+
+        {!['Personalization', 'Display', 'Accessibility', 'Updates', 'About'].includes(activeTab) && (
+          <div className="h-full flex flex-col items-center justify-center text-center opacity-50">
+            <Monitor size={48} className="mb-4 text-gray-600" />
+            <h2 className="text-xl font-bold mb-2">{activeTab} Settings</h2>
+            <p className="text-sm text-gray-500">This section is being updated in the next Nebula OS release.</p>
+          </div>
+        )}
       </div>
     </div>
   );
