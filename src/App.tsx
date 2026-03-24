@@ -3,13 +3,13 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useOSStore } from './store';
 import BIOS from './components/BIOS';
 import Desktop from './components/Desktop';
 import SetupScreen from './components/SetupScreen';
 import { motion, AnimatePresence } from 'motion/react';
-import { User, Lock, LogIn, Power } from 'lucide-react';
+import { User, Lock, LogIn, Power, ChevronRight, Plus } from 'lucide-react';
 import { auth, googleProvider } from './firebase';
 import { onAuthStateChanged, signInWithPopup } from 'firebase/auth';
 
@@ -17,9 +17,13 @@ export default function App() {
   const { 
     isBooted, isLoggedIn, boot, setUser, setAuthReady, isAuthReady, syncSettings,
     isGrayscale, isInverted, toggleGrayscale, toggleInvert, isRestarting,
-    isShutDown, isSetupComplete
+    isShutDown, isSetupComplete, loginLocal, accentColor, fontStyle,
+    savedUsers, removeSavedUser
   } = useOSStore();
   const [isLoggingIn, setIsLoggingIn] = useState(false);
+  const [showLocalLogin, setShowLocalLogin] = useState(false);
+  const [localUsername, setLocalUsername] = useState('');
+  const [isAddingAccount, setIsAddingAccount] = useState(false);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -40,11 +44,22 @@ export default function App() {
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
-      setUser(user);
-      setAuthReady(true);
       if (user) {
+        setUser({
+          uid: user.uid,
+          email: user.email,
+          displayName: user.displayName,
+          photoURL: user.photoURL
+        });
         syncSettings();
+      } else {
+        // Only clear if not a local user
+        const currentUser = useOSStore.getState().user;
+        if (!currentUser?.isLocal) {
+          setUser(null);
+        }
       }
+      setAuthReady(true);
     });
     return () => unsubscribe();
   }, [setUser, setAuthReady, syncSettings]);
@@ -60,9 +75,35 @@ export default function App() {
     }
   };
 
+  const handleLocalLogin = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (localUsername.trim()) {
+      loginLocal(localUsername.trim());
+      setIsAddingAccount(false);
+    }
+  };
+
+  const handleSavedUserLogin = async (savedUser: any) => {
+    if (savedUser.isLocal) {
+      loginLocal(savedUser.displayName);
+    } else {
+      // For Google users, we trigger the popup to refresh the session
+      handleLogin();
+    }
+  };
+
   const filterStyle = {
     filter: `${isGrayscale ? 'grayscale(100%)' : ''} ${isInverted ? 'invert(100%)' : ''}`.trim()
   };
+
+  const themeStyle = {
+    '--os-accent': accentColor,
+    '--font-family-custom': fontStyle === 'sans' ? '"Inter", ui-sans-serif, system-ui, sans-serif' :
+                  fontStyle === 'mono' ? '"JetBrains Mono", ui-monospace, SFMono-Regular, monospace' :
+                  fontStyle === 'display' ? '"Space Grotesk", sans-serif' :
+                  fontStyle === 'serif' ? '"Libre Baskerville", serif' : '"Inter", ui-sans-serif, system-ui, sans-serif',
+    ...filterStyle
+  } as React.CSSProperties;
 
   if (isShutDown) {
     return (
@@ -102,7 +143,7 @@ export default function App() {
   }
 
   return (
-    <div style={filterStyle} className="fixed inset-0">
+    <div style={themeStyle} className="fixed inset-0 font-sans">
       {!isLoggedIn ? (
         <div className="fixed inset-0 bg-[#050505] flex items-center justify-center font-sans overflow-hidden">
           {/* Background Ambient Glow */}
@@ -114,42 +155,138 @@ export default function App() {
           <motion.div 
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="w-full max-w-sm p-8 text-center z-10"
+            className="w-full max-w-md p-8 text-center z-10"
           >
-            <div className="mb-8">
-              <div className="w-24 h-24 bg-blue-600 rounded-full mx-auto mb-4 flex items-center justify-center shadow-2xl shadow-blue-500/20">
-                <User size={48} className="text-white" />
-              </div>
-              <h1 className="text-2xl font-display font-bold text-white tracking-tight">Nebulabs OS 2</h1>
-              <p className="text-gray-500 text-sm mt-1">Please sign in to continue</p>
+            <div className="mb-12">
+              <h1 className="text-4xl font-display font-bold text-white tracking-tighter mb-2">Nebulabs OS 2</h1>
+              <p className="text-gray-500 text-sm font-medium">Welcome back to the future of computing</p>
             </div>
 
-            <button 
-              onClick={handleLogin}
-              disabled={isLoggingIn}
-              className="w-full bg-white text-black font-semibold rounded-xl py-3 px-6 flex items-center justify-center gap-3 hover:bg-gray-200 transition-all disabled:opacity-50"
-            >
-              {isLoggingIn ? (
-                <motion.div 
-                  animate={{ rotate: 360 }}
-                  transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-                  className="w-5 h-5 border-2 border-black border-t-transparent rounded-full"
-                />
-              ) : (
-                <>
-                  <LogIn size={20} />
-                  <span>Sign in with Google</span>
-                </>
-              )}
-            </button>
+            {!isAddingAccount && savedUsers.length > 0 ? (
+              <div className="space-y-6">
+                <div className="grid grid-cols-1 gap-3 max-h-[300px] overflow-y-auto pr-2 custom-scrollbar">
+                  {savedUsers.map((savedUser) => (
+                    <div key={savedUser.uid} className="group relative">
+                      <button
+                        onClick={() => handleSavedUserLogin(savedUser)}
+                        className="w-full flex items-center gap-4 p-4 rounded-2xl bg-white/5 border border-white/10 hover:bg-white/10 transition-all text-left"
+                      >
+                        <div className="w-12 h-12 rounded-full bg-blue-600 flex items-center justify-center overflow-hidden shadow-lg">
+                          {savedUser.photoURL ? (
+                            <img src={savedUser.photoURL} alt={savedUser.displayName || ''} className="w-full h-full object-cover" />
+                          ) : (
+                            <User size={24} className="text-white" />
+                          )}
+                        </div>
+                        <div className="flex-1">
+                          <h3 className="font-bold text-white">{savedUser.displayName}</h3>
+                          <p className="text-[10px] text-gray-500 uppercase tracking-widest">{savedUser.isLocal ? 'Local Account' : savedUser.email}</p>
+                        </div>
+                        <ChevronRight size={18} className="text-gray-600 group-hover:text-white transition-colors" />
+                      </button>
+                      <button 
+                        onClick={(e) => { e.stopPropagation(); removeSavedUser(savedUser.uid); }}
+                        className="absolute -right-2 -top-2 w-6 h-6 rounded-full bg-red-500 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity shadow-lg"
+                      >
+                        <span className="text-xs">×</span>
+                      </button>
+                    </div>
+                  ))}
+                </div>
+                
+                <button 
+                  onClick={() => setIsAddingAccount(true)}
+                  className="w-full flex items-center justify-center gap-2 p-4 rounded-2xl border border-dashed border-white/20 text-gray-400 hover:border-white/40 hover:text-white transition-all text-sm font-medium"
+                >
+                  <Plus size={16} />
+                  <span>Add New Account</span>
+                </button>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {!showLocalLogin ? (
+                  <>
+                    <button 
+                      onClick={handleLogin}
+                      disabled={isLoggingIn}
+                      className="w-full bg-white text-black font-bold rounded-2xl py-4 px-6 flex items-center justify-center gap-3 hover:bg-gray-200 transition-all disabled:opacity-50 shadow-xl shadow-white/5"
+                    >
+                      {isLoggingIn ? (
+                        <motion.div 
+                          animate={{ rotate: 360 }}
+                          transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                          className="w-5 h-5 border-2 border-black border-t-transparent rounded-full"
+                        />
+                      ) : (
+                        <>
+                          <LogIn size={20} />
+                          <span>Sign in with Google</span>
+                        </>
+                      )}
+                    </button>
+                    <button 
+                      onClick={() => setShowLocalLogin(true)}
+                      className="w-full bg-white/5 text-white font-bold rounded-2xl py-4 px-6 flex items-center justify-center gap-3 hover:bg-white/10 transition-all border border-white/10"
+                    >
+                      <User size={20} />
+                      <span>Local Account</span>
+                    </button>
+                    {savedUsers.length > 0 && (
+                      <button 
+                        onClick={() => setIsAddingAccount(false)}
+                        className="w-full text-gray-500 text-xs font-bold uppercase tracking-widest hover:text-white transition-colors mt-4"
+                      >
+                        Cancel
+                      </button>
+                    )}
+                  </>
+                ) : (
+                  <form onSubmit={handleLocalLogin} className="space-y-4">
+                    <div className="text-left space-y-2">
+                      <label className="text-[10px] uppercase tracking-widest font-bold text-gray-500 ml-2">Username</label>
+                      <input 
+                        type="text"
+                        placeholder="Enter your name"
+                        autoFocus
+                        value={localUsername}
+                        onChange={(e) => setLocalUsername(e.target.value)}
+                        className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 px-6 text-white outline-none focus:border-blue-500 transition-all"
+                      />
+                    </div>
+                    <div className="flex gap-3">
+                      <button 
+                        type="button"
+                        onClick={() => setShowLocalLogin(false)}
+                        className="flex-1 bg-white/5 text-white font-bold rounded-2xl py-4 hover:bg-white/10 transition-all border border-white/10"
+                      >
+                        Back
+                      </button>
+                      <button 
+                        type="submit"
+                        disabled={!localUsername.trim()}
+                        className="flex-[2] bg-blue-600 text-white font-bold rounded-2xl py-4 hover:bg-blue-500 transition-all disabled:opacity-50 shadow-xl shadow-blue-500/20"
+                      >
+                        Login
+                      </button>
+                    </div>
+                  </form>
+                )}
+              </div>
+            )}
 
-            <div className="mt-12 flex items-center justify-center gap-8 text-gray-500">
-              <button className="flex flex-col items-center gap-2 hover:text-white transition-colors">
+            <div className="mt-16 flex items-center justify-center gap-12 text-gray-600">
+              <div className="flex flex-col items-center gap-2">
                 <div className="w-10 h-10 rounded-full border border-white/10 flex items-center justify-center">
                   <Lock size={16} />
                 </div>
-                <span className="text-[10px] uppercase tracking-widest font-bold">Secure</span>
-              </button>
+                <span className="text-[9px] uppercase tracking-widest font-bold">Encrypted</span>
+              </div>
+              <div className="flex flex-col items-center gap-2">
+                <div className="w-10 h-10 rounded-full border border-white/10 flex items-center justify-center">
+                  <Power size={16} />
+                </div>
+                <span className="text-[9px] uppercase tracking-widest font-bold">System</span>
+              </div>
             </div>
           </motion.div>
 

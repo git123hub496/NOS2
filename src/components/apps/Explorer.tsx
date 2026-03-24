@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Folder, File, ChevronRight, Search, HardDrive, Download, Clock, Star, Plus, Trash2 } from 'lucide-react';
+import { Folder, File, ChevronRight, Search, HardDrive, Download, Clock, Star, Plus, Trash2, Monitor } from 'lucide-react';
 import { db, handleFirestoreError, OperationType } from '../../firebase';
 import { collection, onSnapshot, addDoc, deleteDoc, doc, Timestamp, query, orderBy } from 'firebase/firestore';
 import { useOSStore } from '../../store';
@@ -11,6 +11,7 @@ interface FileItem {
   size: string;
   date: string;
   ownerId: string;
+  content?: string;
 }
 
 const Explorer: React.FC = () => {
@@ -18,6 +19,8 @@ const Explorer: React.FC = () => {
   const [currentPath, setCurrentPath] = useState("C:\\Users\\Nebulabs\\Documents");
   const [files, setFiles] = useState<FileItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [selectedFile, setSelectedFile] = useState<FileItem | null>(null);
+  const [showPreview, setShowPreview] = useState(true);
   
   useEffect(() => {
     if (!user) return;
@@ -50,6 +53,7 @@ const Explorer: React.FC = () => {
         type,
         ownerId: user.uid,
         size: type === 'file' ? '0 KB' : '--',
+        content: type === 'file' ? 'This is a new text file created in Nebulabs OS.' : '',
         updatedAt: Timestamp.now(),
         date: new Date().toISOString().split('T')[0]
       });
@@ -63,9 +67,64 @@ const Explorer: React.FC = () => {
     const path = `users/${user.uid}/files/${id}`;
     try {
       await deleteDoc(doc(db, `users/${user.uid}/files`, id));
+      if (selectedFile?.id === id) setSelectedFile(null);
     } catch (error) {
       handleFirestoreError(error, OperationType.DELETE, path);
     }
+  };
+
+  const renderPreview = () => {
+    if (!selectedFile) return (
+      <div className="h-full flex flex-col items-center justify-center text-gray-600 text-xs gap-2">
+        <File size={32} className="opacity-20" />
+        <p>Select a file to preview</p>
+      </div>
+    );
+
+    if (selectedFile.type === 'folder') return (
+      <div className="h-full flex flex-col items-center justify-center text-gray-600 text-xs gap-2">
+        <Folder size={32} className="opacity-20" />
+        <p>Folders cannot be previewed</p>
+      </div>
+    );
+
+    const isImage = /\.(jpg|jpeg|png|gif|webp)$/i.test(selectedFile.name);
+    
+    return (
+      <div className="h-full flex flex-col p-4 overflow-auto">
+        <div className="flex items-center gap-3 mb-6">
+          <div className="w-10 h-10 rounded bg-white/5 flex items-center justify-center">
+            {isImage ? <Star size={20} className="text-purple-400" /> : <File size={20} className="text-blue-400" />}
+          </div>
+          <div>
+            <h3 className="text-sm font-bold text-white truncate w-40" title={selectedFile.name}>{selectedFile.name}</h3>
+            <p className="text-[10px] text-gray-500 uppercase tracking-widest">{selectedFile.size} • {selectedFile.date}</p>
+          </div>
+        </div>
+
+        <div className="flex-1 bg-white/5 rounded-lg border border-white/10 overflow-hidden flex flex-col">
+          <div className="px-3 py-2 border-b border-white/10 bg-white/5 text-[10px] uppercase tracking-widest text-gray-500 font-bold">
+            Content Preview
+          </div>
+          <div className="flex-1 p-4 overflow-auto">
+            {isImage ? (
+              <div className="h-full flex items-center justify-center">
+                <img 
+                  src={selectedFile.content || 'https://picsum.photos/seed/file/400/300'} 
+                  alt={selectedFile.name}
+                  className="max-w-full max-h-full object-contain rounded"
+                  referrerPolicy="no-referrer"
+                />
+              </div>
+            ) : (
+              <pre className="text-[11px] text-gray-400 font-mono whitespace-pre-wrap leading-relaxed">
+                {selectedFile.content || 'No content available.'}
+              </pre>
+            )}
+          </div>
+        </div>
+      </div>
+    );
   };
 
   return (
@@ -83,12 +142,21 @@ const Explorer: React.FC = () => {
           <HardDrive size={14} />
           <span>{currentPath}</span>
         </div>
-        <div className="relative w-48">
-          <Search className="absolute left-2 top-1.5 text-gray-500" size={14} />
-          <input 
-            className="w-full bg-white/5 border border-white/10 rounded py-1 pl-8 pr-2 text-xs outline-none focus:border-blue-500/50"
-            placeholder="Search Documents"
-          />
+        <div className="flex items-center gap-2">
+          <button 
+            onClick={() => setShowPreview(!showPreview)}
+            className={`p-1.5 rounded transition-colors ${showPreview ? 'bg-blue-600 text-white' : 'hover:bg-white/10 text-gray-400'}`}
+            title="Toggle Preview Pane"
+          >
+            <Monitor size={16} />
+          </button>
+          <div className="relative w-48">
+            <Search className="absolute left-2 top-1.5 text-gray-500" size={14} />
+            <input 
+              className="w-full bg-white/5 border border-white/10 rounded py-1 pl-8 pr-2 text-xs outline-none focus:border-blue-500/50"
+              placeholder="Search Documents"
+            />
+          </div>
         </div>
       </div>
 
@@ -143,7 +211,11 @@ const Explorer: React.FC = () => {
               </thead>
               <tbody>
                 {files.map((file) => (
-                  <tr key={file.id} className="hover:bg-white/5 group cursor-default">
+                  <tr 
+                    key={file.id} 
+                    onClick={() => setSelectedFile(file)}
+                    className={`hover:bg-white/5 group cursor-default ${selectedFile?.id === file.id ? 'bg-white/10' : ''}`}
+                  >
                     <td className="py-2 px-2 flex items-center gap-3">
                       {file.type === 'folder' ? <Folder size={18} className="text-yellow-500" /> : <File size={18} className="text-gray-400" />}
                       <span className="text-gray-200">{file.name}</span>
@@ -153,7 +225,7 @@ const Explorer: React.FC = () => {
                     <td className="py-2 px-2 text-gray-500">{file.size}</td>
                     <td className="py-2 px-2">
                       <button 
-                        onClick={() => deleteFile(file.id)}
+                        onClick={(e) => { e.stopPropagation(); deleteFile(file.id); }}
                         className="p-1 hover:bg-red-500/20 text-gray-600 hover:text-red-500 rounded opacity-0 group-hover:opacity-100 transition-all"
                       >
                         <Trash2 size={14} />
@@ -165,6 +237,13 @@ const Explorer: React.FC = () => {
             </table>
           )}
         </div>
+
+        {/* Preview Pane */}
+        {showPreview && (
+          <div className="w-80 border-l border-white/5 bg-white/[0.02] overflow-hidden">
+            {renderPreview()}
+          </div>
+        )}
       </div>
     </div>
   );

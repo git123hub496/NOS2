@@ -3,7 +3,10 @@ import { useOSStore } from '../../store';
 import { Monitor, Cpu, Palette, Zap, Info } from 'lucide-react';
 
 const Settings: React.FC = () => {
-  const { isLiteMode, setLiteMode, wallpaper, setWallpaper } = useOSStore();
+  const { 
+    isLiteMode, setLiteMode, wallpaper, setWallpaper, 
+    accentColor, setAccentColor, fontStyle, setFontStyle 
+  } = useOSStore();
 
   return (
     <div className="p-6 text-white font-sans">
@@ -30,6 +33,59 @@ const Settings: React.FC = () => {
               >
                 <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all ${isLiteMode ? 'left-7' : 'left-1'}`} />
               </button>
+            </div>
+          </div>
+        </section>
+
+        <section>
+          <h3 className="text-sm font-medium text-gray-400 uppercase tracking-wider mb-4">Theme</h3>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="bg-white/5 rounded-lg p-4 border border-white/5">
+              <div className="flex items-center gap-3 mb-4">
+                <Palette className="text-blue-500" size={20} />
+                <p className="font-medium text-sm">Accent Color</p>
+              </div>
+              <div className="flex flex-wrap gap-3">
+                {[
+                  { name: 'Blue', color: '#3b82f6' },
+                  { name: 'Purple', color: '#a855f7' },
+                  { name: 'Green', color: '#22c55e' },
+                  { name: 'Pink', color: '#ec4899' },
+                  { name: 'Orange', color: '#f97316' },
+                  { name: 'Red', color: '#ef4444' }
+                ].map((c) => (
+                  <button
+                    key={c.color}
+                    onClick={() => setAccentColor(c.color)}
+                    className={`w-8 h-8 rounded-full border-2 transition-all ${accentColor === c.color ? 'border-white scale-110 shadow-lg shadow-white/10' : 'border-transparent hover:scale-105'}`}
+                    style={{ backgroundColor: c.color }}
+                    title={c.name}
+                  />
+                ))}
+              </div>
+            </div>
+
+            <div className="bg-white/5 rounded-lg p-4 border border-white/5">
+              <div className="flex items-center gap-3 mb-4">
+                <Monitor className="text-indigo-500" size={20} />
+                <p className="font-medium text-sm">Font Style</p>
+              </div>
+              <div className="space-y-2">
+                {[
+                  { id: 'sans', name: 'Standard (Inter)', font: 'font-sans' },
+                  { id: 'mono', name: 'Technical (Mono)', font: 'font-mono' },
+                  { id: 'display', name: 'Modern (Display)', font: 'font-display' },
+                  { id: 'serif', name: 'Classic (Serif)', font: 'font-serif' }
+                ].map((f) => (
+                  <button
+                    key={f.id}
+                    onClick={() => setFontStyle(f.id)}
+                    className={`w-full text-left px-3 py-2 rounded-md text-xs transition-all ${fontStyle === f.id ? 'bg-blue-500 text-white' : 'bg-white/5 text-gray-400 hover:bg-white/10'}`}
+                  >
+                    <span className={f.font}>{f.name}</span>
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
         </section>

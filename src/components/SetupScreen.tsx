@@ -12,13 +12,45 @@ import {
 } from 'lucide-react';
 import { useOSStore } from '../store';
 
+import { auth, googleProvider } from '../firebase';
+import { signInWithPopup } from 'firebase/auth';
+
 const SetupScreen: React.FC = () => {
-  const { setSetupComplete, networks, selectedNetwork, setNetwork } = useOSStore();
+  const { setSetupComplete, networks, selectedNetwork, setNetwork, loginLocal, setUser } = useOSStore();
   const [step, setStep] = useState(1);
   const [userName, setUserName] = useState('');
+  const [accountType, setAccountType] = useState<'google' | 'local' | null>(null);
   const [selectedWallpaper, setSelectedWallpaper] = useState('https://picsum.photos/seed/nebula/1920/1080');
+  const [isLoggingIn, setIsLoggingIn] = useState(false);
 
   const nextStep = () => setStep(s => s + 1);
+
+  const handleGoogleLogin = async () => {
+    setIsLoggingIn(true);
+    try {
+      const result = await signInWithPopup(auth, googleProvider);
+      const user = result.user;
+      setUser({
+        uid: user.uid,
+        email: user.email,
+        displayName: user.displayName,
+        photoURL: user.photoURL
+      });
+      setAccountType('google');
+      nextStep();
+    } catch (error) {
+      console.error("Setup Google login failed:", error);
+    } finally {
+      setIsLoggingIn(false);
+    }
+  };
+
+  const handleFinish = () => {
+    if (accountType === 'local') {
+      loginLocal(userName);
+    }
+    setSetupComplete(true);
+  };
 
   const wallpapers = [
     'https://picsum.photos/seed/nebula/1920/1080',
@@ -129,22 +161,86 @@ const SetupScreen: React.FC = () => {
             >
               <div className="space-y-2">
                 <h2 className="text-3xl font-bold text-white flex items-center gap-3">
-                  <User className="text-purple-500" /> Who's using this PC?
+                  <User className="text-purple-500" /> Choose Account Type
                 </h2>
-                <p className="text-gray-400">Enter your name to personalize your experience.</p>
+                <p className="text-gray-400">How would you like to sign in?</p>
+              </div>
+              <div className="grid grid-cols-1 gap-4">
+                <button
+                  onClick={handleGoogleLogin}
+                  disabled={isLoggingIn}
+                  className={`p-6 rounded-2xl border transition-all text-left flex items-center justify-between group ${accountType === 'google' ? 'bg-blue-600 border-blue-500 text-white' : 'bg-white/5 border-white/10 text-gray-400 hover:bg-white/10'}`}
+                >
+                  <div className="flex items-center gap-4">
+                    {isLoggingIn ? (
+                      <motion.div 
+                        animate={{ rotate: 360 }}
+                        transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                        className="w-8 h-8 border-2 border-blue-400 border-t-transparent rounded-full"
+                      />
+                    ) : (
+                      <Globe size={32} className="text-blue-400" />
+                    )}
+                    <div>
+                      <h3 className="font-bold text-white">Google Account</h3>
+                      <p className="text-xs opacity-60">Sync your settings across devices</p>
+                    </div>
+                  </div>
+                  <ChevronRight size={20} className="opacity-0 group-hover:opacity-100 transition-opacity" />
+                </button>
+                <button
+                  onClick={() => { setAccountType('local'); nextStep(); }}
+                  className={`p-6 rounded-2xl border transition-all text-left flex items-center justify-between group ${accountType === 'local' ? 'bg-purple-600 border-purple-500 text-white' : 'bg-white/5 border-white/10 text-gray-400 hover:bg-white/10'}`}
+                >
+                  <div className="flex items-center gap-4">
+                    <User size={32} className="text-purple-400" />
+                    <div>
+                      <h3 className="font-bold text-white">Local Account</h3>
+                      <p className="text-xs opacity-60">Keep your data on this device only</p>
+                    </div>
+                  </div>
+                  <ChevronRight size={20} className="opacity-0 group-hover:opacity-100 transition-opacity" />
+                </button>
+              </div>
+            </motion.div>
+          )}
+
+          {step === 4 && (
+            <motion.div 
+              key="step4"
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -20 }}
+              className="space-y-8"
+            >
+              <div className="space-y-2">
+                <h2 className="text-3xl font-bold text-white flex items-center gap-3">
+                  <User className="text-purple-500" /> {accountType === 'local' ? "Who's using this PC?" : "Confirm Identity"}
+                </h2>
+                <p className="text-gray-400">
+                  {accountType === 'local' 
+                    ? "Enter your name for your local profile." 
+                    : "You've chosen to use your Google Account."}
+                </p>
               </div>
               <div className="space-y-4">
-                <input 
-                  type="text"
-                  placeholder="Your Name"
-                  value={userName}
-                  onChange={(e) => setUserName(e.target.value)}
-                  className="w-full p-4 bg-white/5 border border-white/10 rounded-xl text-white outline-none focus:border-blue-500 transition-colors"
-                />
+                {accountType === 'local' ? (
+                  <input 
+                    type="text"
+                    placeholder="Your Name"
+                    value={userName}
+                    onChange={(e) => setUserName(e.target.value)}
+                    className="w-full p-4 bg-white/5 border border-white/10 rounded-xl text-white outline-none focus:border-blue-500 transition-colors"
+                  />
+                ) : (
+                  <div className="p-6 bg-blue-600/20 border border-blue-500/30 rounded-2xl text-blue-200 text-sm">
+                    You will be prompted to sign in with Google after setup is complete.
+                  </div>
+                )}
               </div>
               <button 
                 onClick={nextStep}
-                disabled={!userName.trim()}
+                disabled={accountType === 'local' && !userName.trim()}
                 className="w-full py-4 bg-white text-black rounded-xl font-bold disabled:opacity-50 transition-all"
               >
                 Continue
@@ -152,9 +248,9 @@ const SetupScreen: React.FC = () => {
             </motion.div>
           )}
 
-          {step === 4 && (
+          {step === 5 && (
             <motion.div 
-              key="step4"
+              key="step5"
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: -20 }}
@@ -183,7 +279,7 @@ const SetupScreen: React.FC = () => {
                 ))}
               </div>
               <button 
-                onClick={() => setSetupComplete(true)}
+                onClick={handleFinish}
                 className="w-full py-4 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-500 transition-all"
               >
                 Finish Setup

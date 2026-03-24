@@ -12,7 +12,15 @@ import {
   Battery,
   Calendar,
   Presentation,
-  Activity
+  Activity,
+  Search,
+  LayoutGrid,
+  Smartphone,
+  MessageSquare,
+  User as UserIcon,
+  ShoppingBag,
+  CreditCard,
+  Heart
 } from 'lucide-react';
 import { useOSStore, AppId } from '../store';
 import StartMenu from './StartMenu';
@@ -23,7 +31,8 @@ const Taskbar: React.FC = () => {
   const { 
     windows, openApp, focusApp, activeWindowId, isLiteMode, 
     toggleQuickSettings, isQuickSettingsOpen,
-    taskbarPosition, setTaskbarPosition, pinnedAppIds, togglePinApp
+    taskbarPosition, setTaskbarPosition, pinnedAppIds, togglePinApp,
+    user
   } = useOSStore();
   const [isStartOpen, setIsStartOpen] = useState(false);
   const [time, setTime] = useState(new Date());
@@ -35,14 +44,15 @@ const Taskbar: React.FC = () => {
   }, []);
 
   const allApps: { id: AppId; name: string; icon: React.ReactNode; color: string }[] = [
+    { id: 'search', name: 'Nebula Search', icon: <Search size={20} />, color: 'text-blue-400' },
+    { id: 'browser', name: 'Nebula Browser', icon: <Globe size={20} />, color: 'text-blue-500' },
     { id: 'explorer', name: 'File Explorer', icon: <FileText size={20} />, color: 'text-yellow-500' },
-    { id: 'browser', name: 'Web Browser', icon: <Globe size={20} />, color: 'text-blue-400' },
-    { id: 'terminal', name: 'Terminal', icon: <TerminalIcon size={20} />, color: 'text-green-500' },
+    { id: 'store', name: 'App Store', icon: <ShoppingBag size={20} />, color: 'text-pink-500' },
     { id: 'ai', name: 'Nebulabs AI', icon: <Sparkles size={20} />, color: 'text-purple-500' },
-    { id: 'docs', name: 'NebulaDocs', icon: <FileText size={20} />, color: 'text-blue-600' },
-    { id: 'slides', name: 'NebulaSlides', icon: <Presentation size={20} />, color: 'text-orange-500' },
-    { id: 'process-manager', name: 'Process Manager', icon: <Activity size={20} />, color: 'text-red-500' },
-    { id: 'settings', name: 'Settings', icon: <SettingsIcon size={20} />, color: 'text-blue-500' },
+    { id: 'pay', name: 'Nebula Pay', icon: <CreditCard size={20} />, color: 'text-indigo-400' },
+    { id: 'health', name: 'Health', icon: <Heart size={20} />, color: 'text-red-400' },
+    { id: 'terminal', name: 'Terminal', icon: <TerminalIcon size={20} />, color: 'text-green-500' },
+    { id: 'settings', name: 'Settings', icon: <SettingsIcon size={20} />, color: 'text-gray-400' },
   ];
 
   const pinnedApps = allApps.filter(app => pinnedAppIds.includes(app.id));
@@ -86,13 +96,30 @@ const Taskbar: React.FC = () => {
         onContextMenu={handleContextMenu}
         className={`fixed z-[2000] flex items-center justify-between p-2 transition-all duration-300 ${isLiteMode ? 'bg-[#111] border-[#333]' : 'bg-[#0a0a0a]/90 backdrop-blur-md border-white/10'} taskbar-${taskbarPosition}`}
       >
-        <div className={`flex items-center gap-1 ${isVertical ? 'flex-col' : 'flex-row'}`}>
+        <div className={`flex items-center gap-2 ${isVertical ? 'flex-col' : 'flex-row'}`}>
           <button 
             onClick={() => setIsStartOpen(!isStartOpen)}
             className={`p-2 rounded-lg transition-all flex items-center justify-center ${isStartOpen ? 'bg-blue-600 text-white' : 'hover:bg-white/10 text-blue-500'}`}
           >
             <span className="text-xl font-display font-black leading-none select-none">N</span>
           </button>
+          
+          {!isVertical && (
+            <div className="flex items-center gap-2">
+              <div className="relative group">
+                <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 group-focus-within:text-blue-500 transition-colors" />
+                <input 
+                  type="text"
+                  placeholder="Search Google..."
+                  className="bg-white/5 border border-white/10 rounded-full py-1.5 pl-9 pr-4 text-xs text-white outline-none focus:border-blue-500/50 focus:bg-white/10 transition-all w-48"
+                />
+              </div>
+              <button className="p-2 rounded-lg hover:bg-white/10 text-gray-400 transition-colors">
+                <LayoutGrid size={18} />
+              </button>
+            </div>
+          )}
+          
           <div className={`${isVertical ? 'w-6 h-px my-1' : 'w-px h-6 mx-1'} bg-white/10`} />
         </div>
 
@@ -126,6 +153,13 @@ const Taskbar: React.FC = () => {
         </div>
 
         <div className={`flex items-center gap-3 px-2 ${isVertical ? 'flex-col' : 'flex-row'}`}>
+          {!isVertical && (
+            <div className="flex items-center gap-3 text-gray-400 mr-2">
+              <button className="hover:text-white transition-colors"><Smartphone size={16} /></button>
+              <button className="hover:text-white transition-colors"><MessageSquare size={16} /></button>
+            </div>
+          )}
+          
           <div className={`flex items-center gap-3 text-gray-400 ${isVertical ? 'flex-col' : 'flex-row'}`}>
             <Wifi size={16} />
             <Volume2 size={16} />
@@ -145,6 +179,18 @@ const Taskbar: React.FC = () => {
               {time.toLocaleDateString([], { month: 'short', day: 'numeric' })}
             </span>
           </button>
+
+          {!isVertical && (
+            <div className="flex items-center ml-1">
+              <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center overflow-hidden border border-white/10 shadow-lg cursor-pointer hover:scale-110 transition-transform">
+                {user?.photoURL ? (
+                  <img src={user.photoURL} alt={user.displayName || ''} className="w-full h-full object-cover" />
+                ) : (
+                  <UserIcon size={16} className="text-white" />
+                )}
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </>

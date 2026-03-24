@@ -9,16 +9,31 @@ import {
   FileText,
   Search,
   Power,
-  User,
+  User as UserIcon,
   ChevronRight,
-  RotateCcw
+  RotateCcw,
+  LogOut
 } from 'lucide-react';
 import { useOSStore, AppId } from '../store';
+import { auth } from '../firebase';
+import { signOut } from 'firebase/auth';
 
 const StartMenu: React.FC<{ isOpen: boolean; onClose: () => void }> = ({ isOpen, onClose }) => {
-  const { openApp, isLiteMode, powerOff, restart } = useOSStore();
+  const { openApp, isLiteMode, powerOff, restart, user, setUser } = useOSStore();
   const [search, setSearch] = useState("");
   const [isPowerMenuOpen, setIsPowerMenuOpen] = useState(false);
+
+  const handleSignOut = async () => {
+    try {
+      if (!user?.isLocal) {
+        await signOut(auth);
+      }
+      setUser(null);
+      onClose();
+    } catch (error) {
+      console.error("Sign out failed:", error);
+    }
+  };
 
   if (!isOpen) return null;
 
@@ -76,12 +91,16 @@ const StartMenu: React.FC<{ isOpen: boolean; onClose: () => void }> = ({ isOpen,
       {/* Footer */}
       <div className="p-4 bg-white/5 flex items-center justify-between border-t border-white/5 relative">
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center">
-            <User size={16} />
+          <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center overflow-hidden">
+            {user?.photoURL ? (
+              <img src={user.photoURL} alt="User" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+            ) : (
+              <UserIcon size={16} />
+            )}
           </div>
           <div className="flex flex-col">
-            <span className="text-xs font-medium">Nebulabs User</span>
-            <span className="text-[10px] text-gray-500">Local Account</span>
+            <span className="text-xs font-medium">{user?.displayName || 'Nebulabs User'}</span>
+            <span className="text-[10px] text-gray-500">{user?.isLocal ? 'Local Account' : 'Google Account'}</span>
           </div>
         </div>
         
@@ -94,6 +113,13 @@ const StartMenu: React.FC<{ isOpen: boolean; onClose: () => void }> = ({ isOpen,
                 exit={{ opacity: 0, y: 10, scale: 0.9 }}
                 className="absolute bottom-full right-0 mb-2 w-40 glass-dark border border-white/10 rounded-xl overflow-hidden shadow-2xl"
               >
+                <button 
+                  onClick={handleSignOut}
+                  className="w-full flex items-center gap-3 px-4 py-3 hover:bg-white/10 text-xs text-gray-300 transition-colors"
+                >
+                  <LogOut size={14} />
+                  Sign Out
+                </button>
                 <button 
                   onClick={() => { restart(); onClose(); }}
                   className="w-full flex items-center gap-3 px-4 py-3 hover:bg-white/10 text-xs text-gray-300 transition-colors"

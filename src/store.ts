@@ -3,7 +3,7 @@ import { auth, db, handleFirestoreError, OperationType } from './firebase';
 import { doc, getDoc, setDoc, updateDoc, onSnapshot, Timestamp } from 'firebase/firestore';
 import { onAuthStateChanged, User as FirebaseUser } from 'firebase/auth';
 
-export type AppId = 'explorer' | 'settings' | 'terminal' | 'browser' | 'ai' | 'notepad' | 'docs' | 'slides' | 'process-manager';
+export type AppId = 'explorer' | 'settings' | 'terminal' | 'browser' | 'ai' | 'notepad' | 'docs' | 'slides' | 'process-manager' | 'search' | 'store' | 'pay' | 'health';
 export type TaskbarPosition = 'bottom' | 'left' | 'right' | 'top';
 
 export interface Process {
@@ -23,6 +23,14 @@ export interface WindowState {
   zIndex: number;
 }
 
+export interface User {
+  uid: string;
+  email: string | null;
+  displayName: string | null;
+  photoURL: string | null;
+  isLocal?: boolean;
+}
+
 export interface Network {
   id: string;
   name: string;
@@ -35,9 +43,11 @@ interface OSStore {
   isLoggedIn: boolean;
   isAuthReady: boolean;
   isSetupComplete: boolean;
-  user: FirebaseUser | null;
+  user: User | null;
   isLiteMode: boolean;
   wallpaper: string;
+  accentColor: string;
+  fontStyle: string;
   windows: WindowState[];
   activeWindowId: AppId | null;
   
@@ -58,12 +68,16 @@ interface OSStore {
   volume: number;
   selectedNetwork: string;
   networks: Network[];
+  savedUsers: User[];
 
   boot: () => void;
   setAuthReady: (ready: boolean) => void;
-  setUser: (user: FirebaseUser | null) => void;
+  setUser: (user: User | null) => void;
+  loginLocal: (username: string) => void;
   setLiteMode: (enabled: boolean) => void;
   setWallpaper: (url: string) => void;
+  setAccentColor: (color: string) => void;
+  setFontStyle: (font: string) => void;
   setSetupComplete: (complete: boolean) => void;
   
   // App Management
@@ -85,6 +99,8 @@ interface OSStore {
   powerOff: () => void;
   setVolume: (v: number) => void;
   setNetwork: (id: string) => void;
+  addSavedUser: (user: User) => void;
+  removeSavedUser: (uid: string) => void;
   
   syncSettings: () => Promise<void>;
 }
@@ -97,6 +113,8 @@ export const useOSStore = create<OSStore>((set, get) => ({
   user: null,
   isLiteMode: false,
   wallpaper: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=2564&auto=format&fit=crop',
+  accentColor: '#3b82f6',
+  fontStyle: 'sans',
   windows: [],
   activeWindowId: null,
   
@@ -119,10 +137,46 @@ export const useOSStore = create<OSStore>((set, get) => ({
     { id: '3', name: 'Void_Net', signal: 2, isSecure: true },
     { id: '4', name: 'Quantum_Link', signal: 1, isSecure: true },
   ],
+  savedUsers: JSON.parse(localStorage.getItem('nebula_saved_users') || '[]'),
 
   boot: () => set({ isBooted: true, isRestarting: false, isShutDown: false }),
   setAuthReady: (ready) => set({ isAuthReady: ready }),
-  setUser: (user) => set({ user, isLoggedIn: !!user }),
+  setUser: (user) => {
+    set({ user, isLoggedIn: !!user });
+    if (user) {
+      get().addSavedUser(user);
+    }
+  },
+  loginLocal: (username) => {
+    const localUser: User = {
+      uid: `local-${username.toLowerCase().replace(/\s+/g, '-')}`,
+      email: null,
+      displayName: username,
+      photoURL: null,
+      isLocal: true
+    };
+    set({ user: localUser, isLoggedIn: true, isAuthReady: true });
+    get().addSavedUser(localUser);
+  },
+  addSavedUser: (user) => {
+    const { savedUsers } = get();
+    const exists = savedUsers.find(u => u.uid === user.uid);
+    if (!exists) {
+      const newSaved = [...savedUsers, user];
+      set({ savedUsers: newSaved });
+      localStorage.setItem('nebula_saved_users', JSON.stringify(newSaved));
+    } else {
+      // Update existing user info (e.g. photoURL might have changed)
+      const newSaved = savedUsers.map(u => u.uid === user.uid ? user : u);
+      set({ savedUsers: newSaved });
+      localStorage.setItem('nebula_saved_users', JSON.stringify(newSaved));
+    }
+  },
+  removeSavedUser: (uid) => {
+    const newSaved = get().savedUsers.filter(u => u.uid !== uid);
+    set({ savedUsers: newSaved });
+    localStorage.setItem('nebula_saved_users', JSON.stringify(newSaved));
+  },
   setSetupComplete: async (complete) => {
     set({ isSetupComplete: complete });
     const { user } = get();
@@ -202,6 +256,8 @@ export const useOSStore = create<OSStore>((set, get) => ({
         isLiteMode: false,
         isSetupComplete: false,
         wallpaper: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=2564&auto=format&fit=crop',
+        accentColor: '#3b82f6',
+        fontStyle: 'sans',
         taskbarPosition: 'bottom',
         pinnedAppIds: ['explorer', 'browser', 'terminal', 'ai'],
         createdAt: Timestamp.now()
@@ -239,6 +295,32 @@ export const useOSStore = create<OSStore>((set, get) => ({
     }
   },
 
+  setAccentColor: async (color) => {
+    set({ accentColor: color });
+    const { user } = get();
+    if (user) {
+      const path = `users/${user.uid}`;
+      try {
+        await updateDoc(doc(db, path), { accentColor: color });
+      } catch (error) {
+        handleFirestoreError(error, OperationType.UPDATE, path);
+      }
+    }
+  },
+
+  setFontStyle: async (font) => {
+    set({ fontStyle: font });
+    const { user } = get();
+    if (user) {
+      const path = `users/${user.uid}`;
+      try {
+        await updateDoc(doc(db, path), { fontStyle: font });
+      } catch (error) {
+        handleFirestoreError(error, OperationType.UPDATE, path);
+      }
+    }
+  },
+
   syncSettings: async () => {
     const { user } = get();
     if (!user) return;
@@ -252,6 +334,8 @@ export const useOSStore = create<OSStore>((set, get) => ({
           isLiteMode: data.isLiteMode ?? false,
           isSetupComplete: data.isSetupComplete ?? false,
           wallpaper: data.wallpaper ?? 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=2564&auto=format&fit=crop',
+          accentColor: data.accentColor ?? '#3b82f6',
+          fontStyle: data.fontStyle ?? 'sans',
           taskbarPosition: data.taskbarPosition ?? 'bottom',
           pinnedAppIds: data.pinnedAppIds ?? ['explorer', 'browser', 'terminal', 'ai']
         });
@@ -264,6 +348,8 @@ export const useOSStore = create<OSStore>((set, get) => ({
           isLiteMode: false,
           isSetupComplete: false,
           wallpaper: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=2564&auto=format&fit=crop',
+          accentColor: '#3b82f6',
+          fontStyle: 'sans',
           taskbarPosition: 'bottom',
           pinnedAppIds: ['explorer', 'browser', 'terminal', 'ai'],
           createdAt: Timestamp.now()
