@@ -28,6 +28,19 @@
         "updatedAt": { "type": "string", "format": "date-time", "description": "Last modification time." }
       },
       "required": ["name", "type", "ownerId"]
+    },
+    "ChatMessage": {
+      "title": "Global Chat Message",
+      "description": "A message sent in the global real-time chat.",
+      "type": "object",
+      "properties": {
+        "text": { "type": "string", "description": "Content of the message." },
+        "userId": { "type": "string", "description": "UID of the sender." },
+        "userName": { "type": "string", "description": "Display name of the sender." },
+        "userPhoto": { "type": "string", "format": "uri", "description": "Photo URL of the sender." },
+        "createdAt": { "type": "string", "format": "date-time", "description": "When the message was sent." }
+      },
+      "required": ["text", "userId", "userName", "createdAt"]
     }
   },
   "firestore": {
@@ -38,6 +51,10 @@
     "/users/{userId}/files/{fileId}": {
       "schema": "File",
       "description": "User's virtual file system."
+    },
+    "/global_chat/{messageId}": {
+      "schema": "ChatMessage",
+      "description": "Real-time global chat messages."
     }
   }
 }

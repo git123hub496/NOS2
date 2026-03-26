@@ -6,6 +6,7 @@ import Window from './Window';
 import Settings from './apps/Settings';
 import Terminal from './apps/Terminal';
 import AI from './apps/AI';
+import Chat from './apps/Chat';
 import Explorer from './apps/Explorer';
 import NebulaDocs from './apps/NebulaDocs';
 import NebulaSlides from './apps/NebulaSlides';
@@ -546,34 +547,7 @@ const Desktop: React.FC = () => {
       </Window>
 
       <Window id="chat" title="Nebula Chat">
-        <div className="h-full flex flex-col bg-[#0a0a0a]">
-          <div className="p-6 border-b border-white/5 flex items-center gap-4">
-            <div className="w-10 h-10 rounded-full bg-green-500/20 flex items-center justify-center text-green-500">
-              <MessageCircle size={20} />
-            </div>
-            <div>
-              <h2 className="text-lg font-bold text-white">Nebula Chat</h2>
-              <p className="text-[10px] text-green-500 font-bold uppercase tracking-widest">Online</p>
-            </div>
-          </div>
-          <div className="flex-1 p-6 overflow-auto flex flex-col gap-4">
-            <div className="max-w-[80%] bg-white/5 p-4 rounded-2xl rounded-tl-none text-sm text-gray-300">
-              Welcome to Nebula Chat! How can I help you today?
-            </div>
-          </div>
-          <div className="p-6 border-t border-white/5">
-            <div className="relative">
-              <input 
-                type="text" 
-                placeholder="Type a message..." 
-                className="w-full bg-white/5 border border-white/10 rounded-full py-3 pl-6 pr-12 text-sm text-white outline-none focus:border-blue-500/50 transition-colors"
-              />
-              <button className="absolute right-2 top-1/2 -translate-y-1/2 p-2 text-blue-500 hover:text-blue-400">
-                <ChevronRight size={20} />
-              </button>
-            </div>
-          </div>
-        </div>
+        <Chat />
       </Window>
 
       <Window id="info" title="System Info">

@@ -23,6 +23,15 @@
 //   - size: string (optional) - Human-readable size
 //   - updatedAt: timestamp (optional) - Last modification time
 //
+// Collection: /global_chat/{messageId}
+// Document ID: auto-generated
+// Fields:
+//   - text: string (required) - Message content
+//   - userId: string (required) - Sender's UID
+//   - userName: string (required) - Sender's display name
+//   - userPhoto: string (optional) - Sender's photo URL
+//   - createdAt: timestamp (required) - Message creation time
+//
 // ===============================================================
 
 rules_version = '2';
@@ -80,6 +89,15 @@ service cloud.firestore {
              (!('updatedAt' in data) || data.updatedAt is timestamp);
     }
 
+    function isValidChatMessage(data) {
+      return data.keys().hasAll(['text', 'userId', 'userName', 'createdAt']) &&
+             data.text is string && data.text.size() > 0 && data.text.size() < 1000 &&
+             data.userId is string && data.userId == request.auth.uid &&
+             data.userName is string && data.userName.size() > 0 && data.userName.size() < 100 &&
+             (!('userPhoto' in data) || (data.userPhoto == "" || isValidUrl(data.userPhoto))) &&
+             data.createdAt == request.time;
+    }
+
     // ===============================================================
     // Rules
     // ===============================================================
@@ -99,6 +117,12 @@ service cloud.firestore {
         allow update: if isOwner(userId) && isValidFile(request.resource.data);
         allow delete: if isOwner(userId) || isAdmin();
       }
+    }
+
+    match /global_chat/{messageId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated() && isValidChatMessage(request.resource.data);
+      allow update, delete: if isAdmin();
     }
 
     // Default deny
