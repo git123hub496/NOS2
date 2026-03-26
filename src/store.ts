@@ -135,7 +135,7 @@ export const useOSStore = create<OSStore>((set, get) => ({
   isBooted: false,
   isLoggedIn: false,
   isAuthReady: false,
-  isSetupComplete: true,
+  isSetupComplete: false,
   user: null,
   isLiteMode: false,
   wallpaper: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=2564&auto=format&fit=crop',
@@ -219,7 +219,7 @@ export const useOSStore = create<OSStore>((set, get) => ({
   setSetupComplete: async (complete) => {
     set({ isSetupComplete: complete });
     const { user } = get();
-    if (user) {
+    if (user && !user.isLocal) {
       const path = `users/${user.uid}`;
       try {
         await updateDoc(doc(db, path), { isSetupComplete: complete });

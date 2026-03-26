@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useOSStore } from '../store';
 
@@ -6,99 +6,252 @@ interface BIOSProps {
   onComplete: () => void;
 }
 
+type TabType = 'MAIN' | 'ADVANCED' | 'POWER' | 'SECURITY' | 'BOOT' | 'EXIT';
+
+interface BIOSItem {
+  label: string;
+  value?: string;
+  help: string;
+  action?: () => void;
+}
+
+const TABS: TabType[] = ['MAIN', 'ADVANCED', 'POWER', 'SECURITY', 'BOOT', 'EXIT'];
+
+const BOOT_SEQUENCE = [
+  "NEBULABS BIOS v4.5.2",
+  "Copyright (C) 2024-2026 Nebulabs OS.",
+  "",
+  "CPU: Nebulabs Quantum-X Core @ 4.20GHz",
+  "Memory Test: 65536MB OK",
+  "Detecting Primary Master... [OK]",
+  "Detecting Secondary Master... [OK]",
+  "Checking File System... [CLEAN]",
+  "Loading Kernel... [DONE]",
+  "Initializing Nebulabs OS 2 Core...",
+  "Starting Services...",
+  "Network Interface: eth0 [UP]",
+  "Ready."
+];
+
 const BIOS: React.FC<BIOSProps> = ({ onComplete }) => {
   const [lines, setLines] = useState<string[]>([]);
   const [showLogo, setShowLogo] = useState(false);
   const [isBIOSSetup, setIsBIOSSetup] = useState(false);
-
-  const bootSequence = [
-    "NEBULABS BIOS v2.0.4",
-    "Copyright (C) 2024-2026 Nebulabs Corp.",
-    "",
-    "CPU: Quantum Core x86 @ 4.20GHz",
-    "Memory Test: 65536MB OK",
-    "Detecting Primary Master... [OK]",
-    "Detecting Secondary Master... [OK]",
-    "Checking File System... [CLEAN]",
-    "Loading Kernel... [DONE]",
-    "Initializing Nebulabs OS 2 Core...",
-    "Starting Services...",
-    "Network Interface: eth0 [UP]",
-    "Ready."
-  ];
+  const [activeTab, setActiveTab] = useState<TabType>('MAIN');
+  const [selectedItemIndex, setSelectedItemIndex] = useState(0);
+  const [currentTime, setCurrentTime] = useState(new Date());
+  
+  // BIOS Settings State
+  const [systemModel, setSystemModel] = useState('NEBULABOOK');
+  const [customIdentifier, setCustomIdentifier] = useState('SUPERNOVA');
+  const [language, setLanguage] = useState('ENGLISH (US)');
+  const [fastBoot, setFastBoot] = useState(true);
+  const [secureBoot, setSecureBoot] = useState(false);
 
   useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key.toLowerCase() === 'b') {
-        setIsBIOSSetup(true);
-      }
-    };
-    window.addEventListener('keydown', handleKeyDown);
+    const timer = setInterval(() => setCurrentTime(new Date()), 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  const tabContent: Record<TabType, BIOSItem[]> = useMemo(() => ({
+    MAIN: [
+      { label: 'System Time:', value: `[${currentTime.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', second: '2-digit', hour12: true })}]`, help: 'Adjust the system time.' },
+      { label: 'System Date:', value: `[${currentTime.toLocaleDateString()}]`, help: 'Adjust the system date.' },
+      { label: 'BIOS VERSION:', value: 'NEBULABS-V4.5.2-PRO', help: 'Displays the current BIOS version.' },
+      { label: 'FIRMWARE LANGUAGE:', value: `[${language}]`, help: 'Select the default system language.', action: () => setLanguage(prev => prev === 'ENGLISH (US)' ? 'SPANISH (ES)' : 'ENGLISH (US)') },
+      { label: 'SYSTEM MODEL:', value: `[${systemModel}]`, help: 'Displays general system information. Select \'System Model\' to toggle hardware type.', action: () => setSystemModel(prev => prev === 'NEBULABOOK' ? 'NEBULASTATION' : 'NEBULABOOK') },
+      { label: 'CUSTOM IDENTIFIER:', value: `[${customIdentifier}]`, help: 'Set a custom identifier for this machine.', action: () => setCustomIdentifier(prev => prev === 'SUPERNOVA' ? 'QUASAR' : 'SUPERNOVA') },
+      { label: 'Processor Type:', value: 'Nebulabs Quantum-X Core', help: 'Displays the processor type.' },
+      { label: 'CPU Speed:', value: '4.20 GHz (Turbo)', help: 'Displays the CPU speed.' },
+      { label: 'Total Memory:', value: '65536 MB (DDR5-6400)', help: 'Displays the total system memory.' },
+      { label: 'Serial Number:', value: 'NL-QX-9928-ABC-13', help: 'Displays the system serial number.' },
+    ],
+    ADVANCED: [
+      { label: 'CPU Configuration', help: 'Configure CPU features.' },
+      { label: 'SATA Configuration', help: 'Configure SATA controllers.' },
+      { label: 'USB Configuration', help: 'Configure USB ports.' },
+      { label: 'Onboard Devices', help: 'Enable/Disable onboard hardware.' },
+    ],
+    POWER: [
+      { label: 'Power Management', help: 'Configure power saving modes.' },
+      { label: 'Wake on LAN', value: '[DISABLED]', help: 'Enable or disable Wake on LAN feature.' },
+      { label: 'Auto Power On', value: '[OFF]', help: 'Configure automatic power on schedule.' },
+    ],
+    SECURITY: [
+      { label: 'Set Supervisor Password', help: 'Set or change the supervisor password.' },
+      { label: 'Set User Password', help: 'Set or change the user password.' },
+      { label: 'Secure Boot:', value: `[${secureBoot ? 'ENABLED' : 'DISABLED'}]`, help: 'Enable or disable Secure Boot.', action: () => setSecureBoot(!secureBoot) },
+    ],
+    BOOT: [
+      { label: 'Fast Boot:', value: `[${fastBoot ? 'ENABLED' : 'DISABLED'}]`, help: 'Enable or disable Fast Boot for quicker startup.', action: () => setFastBoot(!fastBoot) },
+      { label: 'Boot Priority Order', help: 'Set the sequence of boot devices.' },
+      { label: 'Boot from Network', value: '[OFF]', help: 'Enable or disable network booting.' },
+    ],
+    EXIT: [
+      { label: 'Exit Saving Changes', help: 'Save changes and exit the utility.', action: () => onComplete() },
+      { label: 'Exit Discarding Changes', help: 'Exit the utility without saving.', action: () => onComplete() },
+      { label: 'Load Setup Defaults', help: 'Restore all settings to factory defaults.' },
+      { label: 'FACTORY RESET SYSTEM', help: 'WARNING: This will erase all data and settings. Continue?', action: () => {
+        if (confirm("WARNING: This will erase all data and settings. Continue?")) {
+          useOSStore.getState().factoryReset();
+        }
+      }},
+    ]
+  }), [currentTime, language, systemModel, customIdentifier, secureBoot, fastBoot, onComplete]);
+
+  const currentTabItems = tabContent[activeTab];
+
+  // Boot Sequence Effect
+  useEffect(() => {
+    if (isBIOSSetup) return;
 
     let currentLine = 0;
     const interval = setInterval(() => {
-      if (currentLine < bootSequence.length && !isBIOSSetup) {
-        setLines(prev => [...prev, bootSequence[currentLine]]);
-        currentLine++;
-      } else if (!isBIOSSetup) {
-        clearInterval(interval);
-        setTimeout(() => setShowLogo(true), 500);
-        setTimeout(onComplete, 3000);
-      }
+      setLines(prev => {
+        if (currentLine < BOOT_SEQUENCE.length) {
+          const newLines = [...prev, BOOT_SEQUENCE[currentLine]];
+          currentLine++;
+          return newLines;
+        } else {
+          clearInterval(interval);
+          setTimeout(() => setShowLogo(true), 500);
+          setTimeout(onComplete, 3000);
+          return prev;
+        }
+      });
     }, 150);
 
-    return () => {
-      clearInterval(interval);
-      window.removeEventListener('keydown', handleKeyDown);
-    };
+    return () => clearInterval(interval);
   }, [isBIOSSetup, onComplete]);
+
+  // Keyboard Navigation Effect
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (!isBIOSSetup) {
+        if (e.key.toLowerCase() === 'b') {
+          setIsBIOSSetup(true);
+        }
+        return;
+      }
+
+      switch (e.key) {
+        case 'ArrowLeft':
+          setActiveTab(prev => {
+            const currentIndex = TABS.indexOf(prev);
+            const nextIndex = currentIndex > 0 ? currentIndex - 1 : TABS.length - 1;
+            return TABS[nextIndex];
+          });
+          setSelectedItemIndex(0);
+          break;
+        case 'ArrowRight':
+          setActiveTab(prev => {
+            const currentIndex = TABS.indexOf(prev);
+            const nextIndex = currentIndex < TABS.length - 1 ? currentIndex + 1 : 0;
+            return TABS[nextIndex];
+          });
+          setSelectedItemIndex(0);
+          break;
+        case 'ArrowUp':
+          setSelectedItemIndex(prev => (prev > 0 ? prev - 1 : currentTabItems.length - 1));
+          break;
+        case 'ArrowDown':
+          setSelectedItemIndex(prev => (prev < currentTabItems.length - 1 ? prev + 1 : 0));
+          break;
+        case 'Enter':
+          const item = currentTabItems[selectedItemIndex];
+          if (item?.action) {
+            item.action();
+          }
+          break;
+        case 'Escape':
+          setIsBIOSSetup(false);
+          break;
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isBIOSSetup, currentTabItems, selectedItemIndex]);
 
   if (isBIOSSetup) {
     return (
-      <div className="fixed inset-0 bg-blue-900 text-white font-mono p-8 z-[9999] select-none">
-        <div className="border-4 border-white h-full p-6">
-          <h1 className="text-2xl font-bold mb-8 text-center bg-white text-blue-900 py-2">NEBULABS BIOS SETUP UTILITY</h1>
-          <div className="grid grid-cols-2 gap-12">
-            <div className="space-y-4">
-              <h2 className="text-xl border-b border-white pb-2">System Information</h2>
-              <p>BIOS Version: 2.0.4</p>
-              <p>Build Date: 03/22/2026</p>
-              <p>Processor: Quantum Core x86</p>
-              <p>Total Memory: 65536 MB</p>
+      <div className="fixed inset-0 bg-[#0000AA] text-white font-mono p-4 z-[9999] select-none flex flex-col">
+        {/* Header */}
+        <div className="border-2 border-gray-400 p-1 mb-4 flex justify-between items-center bg-[#0000AA]">
+          <span className="px-2">Nebulabs Setup Utility - Version 4.5.2 (C) 2026 Nebulabs OS.</span>
+          <span className="px-2 text-gray-400">FIRMWARE SETUP</span>
+        </div>
+
+        {/* Tabs */}
+        <div className="flex gap-8 mb-4 px-4">
+          {TABS.map((tab) => (
+            <div 
+              key={tab}
+              className={`px-4 py-0.5 ${activeTab === tab ? 'bg-white text-[#0000AA]' : 'text-gray-300'}`}
+            >
+              {tab}
             </div>
-            <div className="space-y-4">
-              <h2 className="text-xl border-b border-white pb-2">Boot Options</h2>
-              <p>[*] Fast Boot</p>
-              <p>[ ] Secure Boot</p>
-              <p>[*] Legacy Support</p>
-              <p>Boot Order: SSD, USB, Network</p>
-              <div className="pt-4">
-                <button 
-                  onClick={() => {
-                    if (confirm("WARNING: This will erase all data and settings. Continue?")) {
-                      useOSStore.getState().factoryReset();
-                    }
-                  }}
-                  className="w-full text-left px-4 py-2 hover:bg-red-600 hover:text-white transition-colors flex items-center justify-between group text-red-500 border border-red-500/50"
+          ))}
+        </div>
+
+        {/* Main Content Area */}
+        <div className="flex-1 border-2 border-gray-400 flex overflow-hidden">
+          {/* Left Side: Items */}
+          <div className="flex-1 p-6 relative">
+            <div className="space-y-2">
+              {currentTabItems.map((item, index) => (
+                <div 
+                  key={item.label}
+                  className={`flex justify-between items-center px-2 py-0.5 ${selectedItemIndex === index ? 'bg-white text-[#0000AA]' : ''}`}
                 >
-                  <span>FACTORY RESET SYSTEM</span>
-                </button>
+                  <span className="uppercase">{item.label}</span>
+                  <span className="font-bold">{item.value}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Right Side: Help */}
+          <div className="w-80 border-l-2 border-gray-400 p-6 flex flex-col">
+            <h2 className="text-sm font-bold border-b border-gray-400 pb-2 mb-4 uppercase">Item Specific Help</h2>
+            <p className="text-xs text-gray-300 leading-relaxed">
+              {currentTabItems[selectedItemIndex]?.help}
+            </p>
+
+            <div className="mt-auto">
+              <div className="bg-[#1a1a1a]/30 p-4 rounded border border-white/10">
+                <div className="flex justify-between mb-2">
+                  <div className="flex gap-2">
+                    <div className="w-6 h-6 border border-white/20 flex items-center justify-center text-[10px]">↑</div>
+                    <div className="w-6 h-6 border border-white/20 flex items-center justify-center text-[10px]">↓</div>
+                  </div>
+                  <div className="text-[10px] bg-white/10 px-2 flex items-center">SELECT</div>
+                </div>
+                <div className="flex justify-between mb-2">
+                  <div className="flex gap-2">
+                    <div className="w-6 h-6 border border-white/20 flex items-center justify-center text-[10px]">←</div>
+                    <div className="w-6 h-6 border border-white/20 flex items-center justify-center text-[10px]">→</div>
+                  </div>
+                </div>
+                <div className="text-center py-1 border border-red-500/30 text-[10px] text-red-400">
+                  ✕ EXIT SETUP
+                </div>
               </div>
             </div>
           </div>
-          <div className="absolute bottom-12 left-12 right-12 border-t border-white pt-4 flex justify-between text-sm">
-            <span>F10: Save & Exit</span>
-            <span>ESC: Exit Without Saving</span>
-            <span>ENTER: Select</span>
+        </div>
+
+        {/* Footer */}
+        <div className="mt-4 flex justify-between items-end">
+          <div className="flex flex-col">
+            <h1 className="text-3xl font-black italic tracking-tighter leading-none">NEBULABS</h1>
+            <p className="text-[8px] tracking-[0.3em] text-gray-400 mt-1">PROPRIETARY VIRTUAL BIOS ARCHITECTURE</p>
           </div>
-          <button 
-            onClick={() => onComplete()}
-            className="mt-12 px-6 py-2 bg-white text-blue-900 font-bold hover:bg-gray-200 transition-colors"
-          >
-            EXIT TO OS
-          </button>
-          <div className="mt-4 text-xs text-blue-300 animate-pulse">
-            Press 'B' during power-on to enter this utility.
+          <div className="grid grid-cols-2 gap-x-8 gap-y-1 text-[10px] text-gray-300">
+            <div className="flex justify-between gap-4"><span>↑↓</span> <span>Select Item</span></div>
+            <div className="flex justify-between gap-4"><span>Select Menu</span> <span>←→</span></div>
+            <div className="flex justify-between gap-4"><span>Enter</span> <span>Edit/Toggle</span></div>
+            <div className="flex justify-between gap-4"><span>Exit Setup</span> <span>ESC</span></div>
           </div>
         </div>
       </div>

@@ -215,12 +215,12 @@ const SetupScreen: React.FC = () => {
             >
               <div className="space-y-2">
                 <h2 className="text-3xl font-bold text-white flex items-center gap-3">
-                  <User className="text-purple-500" /> {accountType === 'local' ? "Who's using this PC?" : "Confirm Identity"}
+                  <User className="text-purple-500" /> {accountType === 'local' ? "Who's using this PC?" : "Account Ready"}
                 </h2>
                 <p className="text-gray-400">
                   {accountType === 'local' 
                     ? "Enter your name for your local profile." 
-                    : "You've chosen to use your Google Account."}
+                    : `Welcome, ${auth.currentUser?.displayName || 'User'}. Your Google account is connected.`}
                 </p>
               </div>
               <div className="space-y-4">
@@ -228,13 +228,20 @@ const SetupScreen: React.FC = () => {
                   <input 
                     type="text"
                     placeholder="Your Name"
+                    autoFocus
                     value={userName}
                     onChange={(e) => setUserName(e.target.value)}
                     className="w-full p-4 bg-white/5 border border-white/10 rounded-xl text-white outline-none focus:border-blue-500 transition-colors"
                   />
                 ) : (
-                  <div className="p-6 bg-blue-600/20 border border-blue-500/30 rounded-2xl text-blue-200 text-sm">
-                    You will be prompted to sign in with Google after setup is complete.
+                  <div className="flex items-center gap-4 p-6 bg-blue-600/20 border border-blue-500/30 rounded-2xl">
+                    <div className="w-16 h-16 rounded-full overflow-hidden border-2 border-blue-500">
+                      <img src={auth.currentUser?.photoURL || ''} alt="Profile" className="w-full h-full object-cover" />
+                    </div>
+                    <div>
+                      <h3 className="font-bold text-white">{auth.currentUser?.displayName}</h3>
+                      <p className="text-xs text-blue-300">{auth.currentUser?.email}</p>
+                    </div>
                   </div>
                 )}
               </div>

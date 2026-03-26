@@ -31,6 +31,21 @@ const Chat: React.FC = () => {
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    // Skip Firestore for local/guest users to avoid permission errors
+    if (user?.isLocal) {
+      setMessages([
+        {
+          id: 'system-1',
+          text: 'Welcome to Nebula Chat! You are currently in Guest Mode. Real-time global chat is only available to authenticated Nebula Accounts. Please sign in to join the conversation.',
+          userId: 'system',
+          userName: 'System',
+          createdAt: { toDate: () => new Date() }
+        }
+      ]);
+      setIsLoading(false);
+      return;
+    }
+
     const q = query(
       collection(db, 'global_chat'),
       orderBy('createdAt', 'asc'),

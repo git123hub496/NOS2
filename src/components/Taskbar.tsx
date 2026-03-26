@@ -37,7 +37,7 @@ import {
   Type,
   Car
 } from 'lucide-react';
-import { useOSStore, AppId } from '../store';
+import { useOSStore, AppId, TaskbarPosition } from '../store';
 import StartMenu from './StartMenu';
 
 import QuickSettings from './QuickSettings';
@@ -52,7 +52,7 @@ const Taskbar: React.FC = () => {
   } = useOSStore();
   const [isStartOpen, setIsStartOpen] = useState(false);
   const [time, setTime] = useState(new Date());
-  const [contextMenu, setContextMenu] = useState<{ x: number, y: number } | null>(null);
+  const [contextMenu, setContextMenu] = useState<{ x: number, y: number, appId?: AppId } | null>(null);
   const [isHovered, setIsHovered] = useState(false);
 
   React.useEffect(() => {
@@ -93,10 +93,11 @@ const Taskbar: React.FC = () => {
   const pinnedApps = allApps.filter(app => pinnedAppIds.includes(app.id));
   const openUnpinnedApps = allApps.filter(app => !pinnedAppIds.includes(app.id) && windows.some(w => w.id === app.id));
 
-  const handleContextMenu = (e: React.MouseEvent) => {
+  const handleContextMenu = (e: React.MouseEvent, appId?: AppId) => {
     e.preventDefault();
+    e.stopPropagation();
     const menuWidth = 192; // w-48
-    const menuHeight = 160; // Approx height for 4 options + header
+    const menuHeight = 120; // Approx height
     
     let x = e.clientX;
     let y = e.clientY;
@@ -105,7 +106,14 @@ const Taskbar: React.FC = () => {
     if (x + menuWidth > window.innerWidth) x = window.innerWidth - menuWidth - 10;
     if (y + menuHeight > window.innerHeight) y = window.innerHeight - menuHeight - 10;
     
-    setContextMenu({ x, y });
+    setContextMenu({ x, y, appId });
+  };
+
+  const rotateTaskbar = () => {
+    const positions: TaskbarPosition[] = ['bottom', 'left', 'top', 'right'];
+    const currentIndex = positions.indexOf(taskbarPosition);
+    const nextIndex = (currentIndex + 1) % positions.length;
+    setTaskbarPosition(positions[nextIndex]);
   };
 
   const isVertical = taskbarPosition === 'left' || taskbarPosition === 'right';
@@ -125,21 +133,36 @@ const Taskbar: React.FC = () => {
           onClick={() => setContextMenu(null)}
           onMouseLeave={() => setContextMenu(null)}
         >
-          <p className="text-[10px] text-gray-500 uppercase tracking-widest font-bold px-3 py-1 mb-1">Taskbar Position</p>
-          {(['bottom', 'top', 'left', 'right'] as const).map(pos => (
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              rotateTaskbar();
+              setContextMenu(null);
+            }}
+            className="w-full text-left px-3 py-2 rounded-lg text-xs hover:bg-white/10 text-gray-300 flex items-center gap-2 transition-colors"
+          >
+            <RefreshCw size={14} />
+            Rotate Taskbar
+          </button>
+
+          {contextMenu.appId && pinnedAppIds.includes(contextMenu.appId) && (
             <button
-              key={pos}
-              onClick={() => setTaskbarPosition(pos)}
-              className={`w-full text-left px-3 py-1.5 rounded-lg text-xs capitalize transition-colors ${taskbarPosition === pos ? 'bg-blue-600 text-white' : 'hover:bg-white/10 text-gray-300'}`}
+              onClick={(e) => {
+                e.stopPropagation();
+                if (contextMenu.appId) togglePinApp(contextMenu.appId);
+                setContextMenu(null);
+              }}
+              className="w-full text-left px-3 py-2 rounded-lg text-xs hover:bg-red-500/20 text-red-400 flex items-center gap-2 transition-colors mt-1"
             >
-              {pos}
+              <Trash2 size={14} />
+              Unpin from Taskbar
             </button>
-          ))}
+          )}
         </div>
       )}
       
       <div 
-        onContextMenu={handleContextMenu}
+        onContextMenu={(e) => handleContextMenu(e)}
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
         className={`fixed z-[2000] flex items-center justify-between p-2 transition-all duration-300 taskbar-${taskbarPosition} ${isHidden ? 'taskbar-hidden' : ''}`}
@@ -200,11 +223,7 @@ const Taskbar: React.FC = () => {
               <button
                 key={app.id}
                 onClick={() => isOpen ? focusApp(app.id) : openApp(app.id, app.name)}
-                onContextMenu={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  togglePinApp(app.id);
-                }}
+                onContextMenu={(e) => handleContextMenu(e, app.id)}
                 className={`p-2 rounded-lg transition-all relative group ${isActive ? 'bg-white/10' : 'hover:bg-white/5'}`}
                 title={`${app.name} (${isPinned ? 'Pinned' : 'Unpinned'})`}
               >

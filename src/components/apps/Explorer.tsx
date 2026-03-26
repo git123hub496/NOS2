@@ -27,6 +27,23 @@ const Explorer: React.FC = () => {
   useEffect(() => {
     if (!user) return;
 
+    // Skip Firestore for local/guest users to avoid permission errors
+    if (user.isLocal) {
+      setFiles([
+        {
+          id: 'welcome',
+          name: 'Welcome to Nebulabs.txt',
+          type: 'file',
+          size: '1 KB',
+          date: new Date().toISOString().split('T')[0],
+          ownerId: user.uid,
+          content: 'Welcome to Nebulabs OS 2! You are currently logged in as a Guest. To sync your files across devices, please sign in with a Nebula Account.'
+        }
+      ]);
+      setIsLoading(false);
+      return;
+    }
+
     const path = `users/${user.uid}/files`;
     const q = query(collection(db, path), orderBy('type', 'desc'), orderBy('name', 'asc'));
     
@@ -47,6 +64,21 @@ const Explorer: React.FC = () => {
   const createFile = async (type: 'file' | 'folder') => {
     if (!user) return;
     const name = type === 'file' ? 'New File.txt' : 'New Folder';
+
+    if (user.isLocal) {
+      const newFile: FileItem = {
+        id: Math.random().toString(36).substr(2, 9),
+        name,
+        type,
+        ownerId: user.uid,
+        size: type === 'file' ? '0 KB' : '--',
+        content: type === 'file' ? 'This is a new text file created in Nebulabs OS.' : '',
+        date: new Date().toISOString().split('T')[0]
+      };
+      setFiles(prev => [...prev, newFile]);
+      return;
+    }
+
     const path = `users/${user.uid}/files`;
     
     try {
@@ -66,6 +98,13 @@ const Explorer: React.FC = () => {
 
   const deleteFile = async (id: string) => {
     if (!user) return;
+
+    if (user.isLocal) {
+      setFiles(prev => prev.filter(f => f.id !== id));
+      if (selectedFile?.id === id) setSelectedFile(null);
+      return;
+    }
+
     const path = `users/${user.uid}/files/${id}`;
     try {
       await deleteDoc(doc(db, `users/${user.uid}/files`, id));
@@ -87,13 +126,28 @@ const Explorer: React.FC = () => {
     if (!user) return;
 
     if (file.size > 1024 * 1024) {
-      console.error("File is too large. Maximum size is 1MB.");
+      alert("File is too large. Maximum size is 1MB for Nebulabs Cloud storage.");
       return;
     }
 
     const reader = new FileReader();
     reader.onload = async (event) => {
       const content = event.target?.result as string;
+
+      if (user.isLocal) {
+        const newFile: FileItem = {
+          id: Math.random().toString(36).substr(2, 9),
+          name: file.name,
+          type: 'file',
+          ownerId: user.uid,
+          size: `${Math.round(file.size / 1024)} KB`,
+          content: content,
+          date: new Date().toISOString().split('T')[0]
+        };
+        setFiles(prev => [...prev, newFile]);
+        return;
+      }
+
       const path = `users/${user.uid}/files`;
       
       try {
