@@ -48,6 +48,7 @@ const BIOS: React.FC<BIOSProps> = ({ onComplete }) => {
   const [language, setLanguage] = useState('ENGLISH (US)');
   const [fastBoot, setFastBoot] = useState(true);
   const [secureBoot, setSecureBoot] = useState(false);
+  const [isEditingIdentifier, setIsEditingIdentifier] = useState(false);
 
   useEffect(() => {
     const timer = setInterval(() => setCurrentTime(new Date()), 1000);
@@ -60,8 +61,8 @@ const BIOS: React.FC<BIOSProps> = ({ onComplete }) => {
       { label: 'System Date:', value: `[${currentTime.toLocaleDateString()}]`, help: 'Adjust the system date.' },
       { label: 'BIOS VERSION:', value: 'NEBULABS-V4.5.2-PRO', help: 'Displays the current BIOS version.' },
       { label: 'FIRMWARE LANGUAGE:', value: `[${language}]`, help: 'Select the default system language.', action: () => setLanguage(prev => prev === 'ENGLISH (US)' ? 'SPANISH (ES)' : 'ENGLISH (US)') },
-      { label: 'SYSTEM MODEL:', value: `[${systemModel}]`, help: 'Displays general system information. Select \'System Model\' to toggle hardware type.', action: () => setSystemModel(prev => prev === 'NEBULABOOK' ? 'NEBULASTATION' : 'NEBULABOOK') },
-      { label: 'CUSTOM IDENTIFIER:', value: `[${customIdentifier}]`, help: 'Set a custom identifier for this machine.', action: () => setCustomIdentifier(prev => prev === 'SUPERNOVA' ? 'QUASAR' : 'SUPERNOVA') },
+      { label: 'SYSTEM MODEL:', value: `[${systemModel}]`, help: 'Displays general system information. Select \'System Model\' to toggle hardware type.', action: () => setSystemModel(prev => prev === 'NEBULABOOK' ? 'PC' : 'NEBULABOOK') },
+      { label: 'CUSTOM IDENTIFIER:', value: `[${isEditingIdentifier ? customIdentifier + '_' : customIdentifier}]`, help: 'Set a custom identifier for this machine. Press ENTER to edit, then ENTER again to save.', action: () => setIsEditingIdentifier(true) },
       { label: 'Processor Type:', value: 'Nebulabs Quantum-X Core', help: 'Displays the processor type.' },
       { label: 'CPU Speed:', value: '4.20 GHz (Turbo)', help: 'Displays the CPU speed.' },
       { label: 'Total Memory:', value: '65536 MB (DDR5-6400)', help: 'Displays the total system memory.' },
@@ -98,7 +99,7 @@ const BIOS: React.FC<BIOSProps> = ({ onComplete }) => {
         }
       }},
     ]
-  }), [currentTime, language, systemModel, customIdentifier, secureBoot, fastBoot, onComplete]);
+  }), [currentTime, language, systemModel, customIdentifier, secureBoot, fastBoot, onComplete, isEditingIdentifier]);
 
   const currentTabItems = tabContent[activeTab];
 
@@ -131,6 +132,17 @@ const BIOS: React.FC<BIOSProps> = ({ onComplete }) => {
       if (!isBIOSSetup) {
         if (e.key.toLowerCase() === 'b') {
           setIsBIOSSetup(true);
+        }
+        return;
+      }
+
+      if (isEditingIdentifier) {
+        if (e.key === 'Enter' || e.key === 'Escape') {
+          setIsEditingIdentifier(false);
+        } else if (e.key === 'Backspace') {
+          setCustomIdentifier(prev => prev.slice(0, -1));
+        } else if (e.key.length === 1 && /^[a-zA-Z0-9\s_-]$/.test(e.key)) {
+          setCustomIdentifier(prev => (prev + e.key).toUpperCase());
         }
         return;
       }
