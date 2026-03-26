@@ -210,8 +210,8 @@ const Explorer: React.FC = () => {
     return (
       <div className="h-full flex flex-col p-4 overflow-auto">
         <div className="flex items-center gap-3 mb-6">
-          <div className="w-10 h-10 rounded bg-white/5 flex items-center justify-center">
-            {isImage ? <Star size={20} className="text-purple-400" /> : <File size={20} className="text-blue-400" />}
+            <div className="w-10 h-10 rounded bg-white/5 flex items-center justify-center">
+            {isImage ? <Star size={20} className="text-purple-400" /> : <File size={20} style={{ color: 'var(--os-accent)' }} />}
           </div>
           <div>
             <h3 className="text-sm font-bold text-white truncate w-40" title={selectedFile.name}>{selectedFile.name}</h3>
@@ -269,7 +269,11 @@ const Explorer: React.FC = () => {
         <div className="flex items-center gap-2">
           <button 
             onClick={() => setShowPreview(!showPreview)}
-            className={`p-1.5 rounded transition-colors ${showPreview ? 'bg-blue-600 text-white' : 'hover:bg-white/10 text-gray-400'}`}
+            className="p-1.5 rounded transition-colors"
+            style={{ 
+              backgroundColor: showPreview ? 'var(--os-accent)' : 'transparent',
+              color: showPreview ? 'white' : '#9ca3af'
+            }}
             title="Toggle Preview Pane"
           >
             <Monitor size={16} />
@@ -277,7 +281,8 @@ const Explorer: React.FC = () => {
           <div className="relative w-48">
             <Search className="absolute left-2 top-1.5 text-gray-500" size={14} />
             <input 
-              className="w-full bg-white/5 border border-white/10 rounded py-1 pl-8 pr-2 text-xs outline-none focus:border-blue-500/50"
+              className="w-full bg-white/5 border border-white/10 rounded py-1 pl-8 pr-2 text-xs outline-none focus:ring-1"
+              style={{ boxShadow: '0 0 0 1px var(--os-accent)' }}
               placeholder="Search Documents"
             />
           </div>
@@ -291,9 +296,12 @@ const Explorer: React.FC = () => {
             <Star size={14} className="text-yellow-500" /> Quick Access
           </button>
           <button className="w-full flex items-center gap-2 px-3 py-1.5 rounded-lg hover:bg-white/5 text-xs text-gray-300">
-            <Clock size={14} className="text-blue-400" /> Recent
+            <Clock size={14} style={{ color: 'var(--os-accent)' }} /> Recent
           </button>
-          <button className="w-full flex items-center gap-2 px-3 py-1.5 rounded-lg bg-blue-500/10 text-blue-400">
+          <button 
+            className="w-full flex items-center gap-2 px-3 py-1.5 rounded-lg"
+            style={{ backgroundColor: 'var(--os-accent-glow)', color: 'var(--os-accent)' }}
+          >
             <Folder size={14} /> Documents
           </button>
           <button className="w-full flex items-center gap-2 px-3 py-1.5 rounded-lg hover:bg-white/5 text-xs text-gray-300">
@@ -307,7 +315,8 @@ const Explorer: React.FC = () => {
 
         {/* File List */}
         <div 
-          className={`flex-1 overflow-auto p-4 transition-colors ${isDragging ? 'bg-blue-500/10' : ''}`}
+          className={`flex-1 overflow-auto p-4 transition-colors ${isDragging ? 'bg-white/5' : ''}`}
+          style={{ backgroundColor: isDragging ? 'var(--os-accent-glow)' : undefined }}
           onDragOver={handleDragOver}
           onDragLeave={handleDragLeave}
           onDrop={handleDrop}
@@ -322,7 +331,8 @@ const Explorer: React.FC = () => {
               <p>This folder is empty.</p>
               <button 
                 onClick={() => createFile('file')}
-                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-500 transition-colors"
+                className="px-4 py-2 text-white rounded-lg transition-colors"
+                style={{ backgroundColor: 'var(--os-accent)' }}
               >
                 Create your first file
               </button>
@@ -343,7 +353,8 @@ const Explorer: React.FC = () => {
                   <tr 
                     key={file.id} 
                     onClick={() => setSelectedFile(file)}
-                    className={`hover:bg-white/5 group cursor-default ${selectedFile?.id === file.id ? 'bg-white/10' : ''}`}
+                    className="hover:bg-white/5 group cursor-default"
+                    style={{ backgroundColor: selectedFile?.id === file.id ? 'var(--os-accent-glow)' : undefined }}
                   >
                     <td className="py-2 px-2 flex items-center gap-3">
                       {file.type === 'folder' ? <Folder size={18} className="text-yellow-500" /> : <File size={18} className="text-gray-400" />}

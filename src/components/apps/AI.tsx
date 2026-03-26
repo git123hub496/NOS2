@@ -75,7 +75,10 @@ const AI: React.FC = () => {
     <div className="h-full flex flex-col bg-[#050505] text-white font-sans overflow-hidden">
       {/* Header */}
       <div className="h-14 border-b border-white/5 flex items-center px-6 gap-4 bg-black/40 backdrop-blur-xl">
-        <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-600 to-purple-600 flex items-center justify-center shadow-lg shadow-blue-500/20">
+        <div 
+          className="w-8 h-8 rounded-lg flex items-center justify-center shadow-lg"
+          style={{ backgroundColor: 'var(--os-accent)', boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)' }}
+        >
           <Sparkles size={16} className="text-white" />
         </div>
         <div className="flex-1">
@@ -103,10 +106,14 @@ const AI: React.FC = () => {
             key={i} 
             className={`flex gap-5 ${msg.role === 'user' ? 'flex-row-reverse' : 'flex-row'}`}
           >
-            <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 shadow-xl ${
-              msg.role === 'user' ? 'bg-blue-600' : 'bg-white/5 border border-white/10'
-            }`}>
-              {msg.role === 'user' ? <User size={20} /> : <Bot size={20} className="text-purple-400" />}
+            <div 
+              className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 shadow-xl"
+              style={{ 
+                backgroundColor: msg.role === 'user' ? 'var(--os-accent)' : 'rgba(255,255,255,0.05)',
+                border: msg.role === 'user' ? 'none' : '1px solid rgba(255,255,255,0.1)'
+              }}
+            >
+              {msg.role === 'user' ? <User size={20} /> : <Bot size={20} style={{ color: 'var(--os-accent)' }} />}
             </div>
             <div className={`flex flex-col gap-2 max-w-[80%] ${msg.role === 'user' ? 'items-end' : 'items-start'}`}>
               <div className="flex items-center gap-2 px-1">
@@ -117,11 +124,10 @@ const AI: React.FC = () => {
                   {msg.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                 </span>
               </div>
-              <div className={`p-5 rounded-2xl text-sm leading-relaxed shadow-2xl ${
-                msg.role === 'user' 
-                  ? 'bg-blue-600 text-white rounded-tr-none' 
-                  : 'bg-white/5 border border-white/10 text-gray-200 rounded-tl-none'
-              }`}>
+              <div 
+                className={`p-5 rounded-2xl text-sm leading-relaxed shadow-2xl ${msg.role === 'user' ? 'text-white rounded-tr-none' : 'bg-white/5 border border-white/10 text-gray-200 rounded-tl-none'}`}
+                style={{ backgroundColor: msg.role === 'user' ? 'var(--os-accent)' : undefined }}
+              >
                 <div className="markdown-body prose prose-invert prose-sm max-w-none">
                   <Markdown>{msg.content}</Markdown>
                 </div>
@@ -132,12 +138,12 @@ const AI: React.FC = () => {
         {isLoading && messages[messages.length - 1].role === 'user' && (
           <div className="flex justify-start gap-5">
             <div className="w-10 h-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center shrink-0">
-              <Bot size={20} className="text-purple-400 animate-pulse" />
+              <Bot size={20} className="animate-pulse" style={{ color: 'var(--os-accent)' }} />
             </div>
             <div className="bg-white/5 border border-white/10 p-4 rounded-2xl rounded-tl-none flex gap-2 items-center">
-              <div className="w-1.5 h-1.5 bg-purple-500 rounded-full animate-bounce" />
-              <div className="w-1.5 h-1.5 bg-purple-500 rounded-full animate-bounce [animation-delay:0.2s]" />
-              <div className="w-1.5 h-1.5 bg-purple-500 rounded-full animate-bounce [animation-delay:0.4s]" />
+              <div className="w-1.5 h-1.5 rounded-full animate-bounce" style={{ backgroundColor: 'var(--os-accent)' }} />
+              <div className="w-1.5 h-1.5 rounded-full animate-bounce [animation-delay:0.2s]" style={{ backgroundColor: 'var(--os-accent)' }} />
+              <div className="w-1.5 h-1.5 rounded-full animate-bounce [animation-delay:0.4s]" style={{ backgroundColor: 'var(--os-accent)' }} />
             </div>
           </div>
         )}
@@ -147,7 +153,8 @@ const AI: React.FC = () => {
       <div className="p-6 bg-black/40 border-t border-white/5 backdrop-blur-2xl">
         <div className="relative max-w-4xl mx-auto">
           <input
-            className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 px-6 pr-16 outline-none focus:border-blue-500/50 transition-all text-sm placeholder:text-gray-600 shadow-inner"
+            className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 px-6 pr-16 outline-none transition-all text-sm placeholder:text-gray-600 shadow-inner focus:ring-1"
+            style={{ boxShadow: '0 0 0 1px var(--os-accent)' }}
             placeholder="Ask Nebulabs AI anything..."
             value={input}
             onChange={(e) => setInput(e.target.value)}
@@ -156,7 +163,8 @@ const AI: React.FC = () => {
           <button 
             onClick={handleSend}
             disabled={isLoading || !input.trim()}
-            className="absolute right-2 top-2 p-3 bg-blue-600 hover:bg-blue-500 text-white rounded-xl transition-all disabled:opacity-30 disabled:grayscale shadow-lg active:scale-95"
+            className="absolute right-2 top-2 p-3 text-white rounded-xl transition-all disabled:opacity-30 disabled:grayscale shadow-lg active:scale-95"
+            style={{ backgroundColor: 'var(--os-accent)' }}
           >
             {isLoading ? <Zap size={18} className="animate-spin" /> : <Send size={18} />}
           </button>

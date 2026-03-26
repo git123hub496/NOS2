@@ -31,7 +31,7 @@ const NebulaBrowser: React.FC = () => {
     <div className="h-full flex flex-col bg-white overflow-auto">
       <div className="h-10 bg-gray-100 border-b flex items-center px-4 gap-2 sticky top-0 z-10">
         <div className="flex-1 bg-white rounded border px-3 py-1 text-xs text-gray-600 flex items-center gap-2">
-          <Globe size={12} className="text-blue-500" />
+          <Globe size={12} style={{ color: 'var(--os-accent)' }} />
           <span>https://www.google.com/search</span>
         </div>
       </div>

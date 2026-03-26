@@ -15,13 +15,16 @@ const NebulaSlides: React.FC = () => {
       {/* Ribbon */}
       <div className="bg-[#3c4043] border-b border-gray-600 p-2 flex flex-col gap-2">
         <div className="flex items-center gap-4 px-2">
-          <Presentation className="text-orange-500" size={20} />
+          <Presentation style={{ color: 'var(--os-accent)' }} size={20} />
           <input 
             defaultValue="Untitled Presentation"
             className="bg-transparent border-none outline-none font-medium text-sm hover:bg-gray-600 px-2 py-1 rounded transition-colors"
           />
           <div className="flex-1" />
-          <button className="flex items-center gap-2 px-4 py-1.5 bg-orange-600 hover:bg-orange-500 rounded-full text-xs font-bold transition-colors">
+          <button 
+            className="flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-bold transition-colors text-white"
+            style={{ backgroundColor: 'var(--os-accent)' }}
+          >
             <Play size={14} /> Slideshow
           </button>
         </div>
@@ -45,7 +48,8 @@ const NebulaSlides: React.FC = () => {
             <button 
               key={slide.id}
               onClick={() => setActiveSlide(i)}
-              className={`w-full aspect-video rounded border-2 transition-all p-2 text-left overflow-hidden ${activeSlide === i ? 'border-orange-500 bg-orange-500/10' : 'border-gray-600 hover:border-gray-400'}`}
+              className={`w-full aspect-video rounded border-2 transition-all p-2 text-left overflow-hidden ${activeSlide === i ? 'bg-white/5' : 'border-gray-600 hover:border-gray-400'}`}
+              style={{ borderColor: activeSlide === i ? 'var(--os-accent)' : undefined }}
             >
               <div className="text-[6px] font-bold text-gray-400 mb-1">Slide {i + 1}</div>
               <div className="text-[8px] font-bold truncate">{slide.title}</div>

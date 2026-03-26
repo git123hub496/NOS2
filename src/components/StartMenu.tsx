@@ -64,32 +64,32 @@ const StartMenu: React.FC<{ isOpen: boolean; onClose: () => void }> = ({ isOpen,
   if (!isOpen) return null;
 
   const allApps: { id: AppId; name: string; icon: React.ReactNode; color: string }[] = [
-    { id: 'store', name: 'App Store', icon: <ShoppingBag size={20} />, color: 'text-pink-500' },
-    { id: 'explorer', name: 'File Explorer', icon: <FileText size={20} />, color: 'text-yellow-500' },
-    { id: 'settings', name: 'Settings', icon: <SettingsIcon size={20} />, color: 'text-gray-400' },
-    { id: 'ai', name: 'AI Assistant', icon: <MessageSquare size={20} />, color: 'text-purple-500' },
-    { id: 'notepad', name: 'Notes', icon: <FileText size={20} />, color: 'text-blue-400' },
-    { id: 'calculator', name: 'Calculator', icon: <Calculator size={20} />, color: 'text-orange-500' },
-    { id: 'browser', name: 'Nebula Browser', icon: <Globe size={20} />, color: 'text-blue-500' },
-    { id: 'recycle-bin', name: 'Recycle Bin', icon: <Trash2 size={20} />, color: 'text-gray-500' },
-    { id: 'mail', name: 'Nebula Mail', icon: <Mail size={20} />, color: 'text-blue-300' },
-    { id: 'maps', name: 'Nebula Maps', icon: <Map size={20} />, color: 'text-green-500' },
-    { id: 'process-manager', name: 'System Monitor', icon: <Activity size={20} />, color: 'text-red-500' },
-    { id: 'calendar', name: 'Calendar', icon: <Calendar size={20} />, color: 'text-red-400' },
-    { id: 'phone', name: 'Nebula Phone', icon: <Smartphone size={20} />, color: 'text-green-400' },
-    { id: 'shop', name: 'Shop Nebulabs', icon: <ShoppingBag size={20} />, color: 'text-pink-400' },
-    { id: 'themes', name: 'Themes', icon: <Palette size={20} />, color: 'text-purple-400' },
-    { id: 'games', name: 'Nebula Games', icon: <Gamepad2 size={20} />, color: 'text-indigo-400' },
-    { id: 'minesweeper', name: 'Minesweeper', icon: <Bomb size={20} />, color: 'text-gray-400' },
-    { id: 'update', name: 'System Update', icon: <RefreshCw size={20} />, color: 'text-blue-400' },
-    { id: 'chat', name: 'Nebula Chat', icon: <MessageCircle size={20} />, color: 'text-green-400' },
-    { id: 'info', name: 'System Info', icon: <Info size={20} />, color: 'text-blue-300' },
-    { id: 'camera', name: 'Nebula Camera', icon: <Camera size={20} />, color: 'text-gray-300' },
-    { id: 'tv', name: 'Nebula TV', icon: <Tv size={20} />, color: 'text-red-500' },
-    { id: 'sticky-notes', name: 'Sticky Notes', icon: <StickyNote size={20} />, color: 'text-yellow-400' },
-    { id: 'fonts', name: 'Fonts', icon: <Type size={20} />, color: 'text-gray-200' },
-    { id: 'car', name: 'Nebula Drive', icon: <Car size={20} />, color: 'text-gray-400' },
-    { id: 'terminal', name: 'Terminal', icon: <TerminalIcon size={20} />, color: 'text-green-500' },
+    { id: 'store', name: 'App Store', icon: <ShoppingBag size={20} />, color: 'var(--os-accent)' },
+    { id: 'explorer', name: 'File Explorer', icon: <FileText size={20} />, color: 'var(--os-accent)' },
+    { id: 'settings', name: 'Settings', icon: <SettingsIcon size={20} />, color: 'var(--os-accent)' },
+    { id: 'ai', name: 'AI Assistant', icon: <MessageSquare size={20} />, color: 'var(--os-accent)' },
+    { id: 'notepad', name: 'Notes', icon: <FileText size={20} />, color: 'var(--os-accent)' },
+    { id: 'calculator', name: 'Calculator', icon: <Calculator size={20} />, color: 'var(--os-accent)' },
+    { id: 'browser', name: 'Nebula Browser', icon: <Globe size={20} />, color: 'var(--os-accent)' },
+    { id: 'recycle-bin', name: 'Recycle Bin', icon: <Trash2 size={20} />, color: 'var(--os-accent)' },
+    { id: 'mail', name: 'Nebula Mail', icon: <Mail size={20} />, color: 'var(--os-accent)' },
+    { id: 'maps', name: 'Nebula Maps', icon: <Map size={20} />, color: 'var(--os-accent)' },
+    { id: 'process-manager', name: 'System Monitor', icon: <Activity size={20} />, color: 'var(--os-accent)' },
+    { id: 'calendar', name: 'Calendar', icon: <Calendar size={20} />, color: 'var(--os-accent)' },
+    { id: 'phone', name: 'Nebula Phone', icon: <Smartphone size={20} />, color: 'var(--os-accent)' },
+    { id: 'shop', name: 'Shop Nebulabs', icon: <ShoppingBag size={20} />, color: 'var(--os-accent)' },
+    { id: 'themes', name: 'Themes', icon: <Palette size={20} />, color: 'var(--os-accent)' },
+    { id: 'games', name: 'Nebula Games', icon: <Gamepad2 size={20} />, color: 'var(--os-accent)' },
+    { id: 'minesweeper', name: 'Minesweeper', icon: <Bomb size={20} />, color: 'var(--os-accent)' },
+    { id: 'update', name: 'System Update', icon: <RefreshCw size={20} />, color: 'var(--os-accent)' },
+    { id: 'chat', name: 'Nebula Chat', icon: <MessageCircle size={20} />, color: 'var(--os-accent)' },
+    { id: 'info', name: 'System Info', icon: <Info size={20} />, color: 'var(--os-accent)' },
+    { id: 'camera', name: 'Nebula Camera', icon: <Camera size={20} />, color: 'var(--os-accent)' },
+    { id: 'tv', name: 'Nebula TV', icon: <Tv size={20} />, color: 'var(--os-accent)' },
+    { id: 'sticky-notes', name: 'Sticky Notes', icon: <StickyNote size={20} />, color: 'var(--os-accent)' },
+    { id: 'fonts', name: 'Fonts', icon: <Type size={20} />, color: 'var(--os-accent)' },
+    { id: 'car', name: 'Nebula Drive', icon: <Car size={20} />, color: 'var(--os-accent)' },
+    { id: 'terminal', name: 'Terminal', icon: <TerminalIcon size={20} />, color: 'var(--os-accent)' },
   ];
 
   const pinnedApps = allApps.filter(app => pinnedStartAppIds.includes(app.id));
@@ -171,16 +171,17 @@ const StartMenu: React.FC<{ isOpen: boolean; onClose: () => void }> = ({ isOpen,
           <h3 className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">
             {view === 'pinned' ? 'Workspace Intelligence' : 'All Applications'}
           </h3>
-          <button 
-            onClick={() => setView(view === 'pinned' ? 'all' : 'pinned')}
-            className="text-[10px] font-bold text-blue-500 hover:text-blue-400 transition-colors flex items-center gap-1"
-          >
-            {view === 'pinned' ? (
-              <>All Apps <ChevronRight size={10} /></>
-            ) : (
-              <><ChevronLeft size={10} /> Back</>
-            )}
-          </button>
+            <button 
+              onClick={() => setView(view === 'pinned' ? 'all' : 'pinned')}
+              className="text-[10px] font-bold hover:opacity-80 transition-colors flex items-center gap-1"
+              style={{ color: 'var(--os-accent)' }}
+            >
+              {view === 'pinned' ? (
+                <>All Apps <ChevronRight size={10} /></>
+              ) : (
+                <><ChevronLeft size={10} /> Back</>
+              )}
+            </button>
         </div>
         
         <div className="grid grid-cols-4 gap-2">
@@ -191,7 +192,10 @@ const StartMenu: React.FC<{ isOpen: boolean; onClose: () => void }> = ({ isOpen,
               onContextMenu={(e) => handleContextMenu(e, app.id)}
               className="flex flex-col items-center gap-2 p-3 rounded-xl hover:bg-white/5 transition-colors group"
             >
-              <div className={`w-10 h-10 rounded-lg bg-white/5 flex items-center justify-center group-hover:scale-110 transition-transform ${app.color}`}>
+              <div 
+                className="w-10 h-10 rounded-lg bg-white/5 flex items-center justify-center group-hover:scale-110 transition-transform"
+                style={{ color: app.color }}
+              >
                 {app.icon}
               </div>
               <span className="text-[10px] text-gray-300 text-center truncate w-full px-1">{app.name}</span>
@@ -204,7 +208,8 @@ const StartMenu: React.FC<{ isOpen: boolean; onClose: () => void }> = ({ isOpen,
             <p className="text-xs">No pinned apps</p>
             <button 
               onClick={() => setView('all')}
-              className="mt-4 text-[10px] text-blue-500 font-bold uppercase"
+              className="mt-4 text-[10px] font-bold uppercase"
+              style={{ color: 'var(--os-accent)' }}
             >
               View All Apps
             </button>
@@ -216,16 +221,19 @@ const StartMenu: React.FC<{ isOpen: boolean; onClose: () => void }> = ({ isOpen,
       <div className="p-4 bg-white/5 flex items-center justify-between border-t border-white/5 relative">
         <div className="flex items-center justify-between w-full">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-blue-600/20 flex items-center justify-center overflow-hidden border border-blue-500/20">
+            <div 
+              className="w-10 h-10 rounded-full flex items-center justify-center overflow-hidden border"
+              style={{ borderColor: 'var(--os-accent-border)', backgroundColor: 'var(--os-accent-glow)' }}
+            >
               {user?.photoURL ? (
                 <img src={user.photoURL} alt="User" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
               ) : (
-                <span className="text-blue-500 font-bold">{user?.displayName?.[0] || 'A'}</span>
+                <span className="font-bold" style={{ color: 'var(--os-accent)' }}>{user?.displayName?.[0] || 'A'}</span>
               )}
             </div>
             <div className="flex flex-col">
               <span className="text-xs font-bold uppercase tracking-wider">{user?.displayName || 'AXRTECH'}</span>
-              <span className="text-[9px] text-blue-500 font-bold uppercase tracking-tighter">Administrator</span>
+              <span className="text-[9px] font-bold uppercase tracking-tighter" style={{ color: 'var(--os-accent)' }}>Administrator</span>
             </div>
           </div>
 

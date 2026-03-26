@@ -38,11 +38,14 @@ const Window: React.FC<WindowProps> = ({ id, title, children }) => {
       drag={!windowState.isMaximized}
       dragMomentum={false}
       onMouseDown={() => focusApp(id)}
-      style={{ zIndex: windowState.zIndex }}
+      style={{ 
+        zIndex: windowState.zIndex,
+        boxShadow: isActive ? '0 0 0 1px var(--os-accent)' : undefined
+      }}
       className={cn(
         "fixed overflow-hidden flex flex-col window-shadow",
         isLiteMode ? "bg-[#1a1a1a] border border-[#333]" : "glass-dark rounded-xl border border-white/10",
-        isActive ? "ring-1 ring-blue-500/50" : ""
+        isActive ? "ring-1" : ""
       )}
     >
       {/* Title Bar */}

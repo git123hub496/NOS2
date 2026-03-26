@@ -68,7 +68,8 @@ const Terminal: React.FC = () => {
 
   return (
     <div 
-      className="h-full bg-[#0c0c0c] text-green-500 font-mono p-4 overflow-auto"
+      className="h-full bg-[#0c0c0c] font-mono p-4 overflow-auto"
+      style={{ color: 'var(--os-accent)' }}
       ref={scrollRef}
       onClick={() => document.getElementById('terminal-input')?.focus()}
     >
@@ -76,11 +77,12 @@ const Terminal: React.FC = () => {
         <div key={i} className="whitespace-pre-wrap mb-1">{line}</div>
       ))}
       <form onSubmit={handleCommand} className="flex">
-        <span className="mr-2 text-blue-400">nebulabs@user:~$</span>
+        <span className="mr-2" style={{ color: 'var(--os-accent)' }}>nebulabs@user:~$</span>
         <input
           id="terminal-input"
           autoFocus
-          className="flex-1 bg-transparent border-none outline-none text-green-500"
+          className="flex-1 bg-transparent border-none outline-none"
+          style={{ color: 'var(--os-accent)' }}
           value={input}
           onChange={(e) => setInput(e.target.value)}
         />

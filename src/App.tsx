@@ -18,7 +18,7 @@ export default function App() {
     isBooted, isLoggedIn, boot, setUser, setAuthReady, isAuthReady, syncSettings,
     isGrayscale, isInverted, toggleGrayscale, toggleInvert, isRestarting,
     isShutDown, isSetupComplete, loginLocal, accentColor, fontStyle,
-    savedUsers, removeSavedUser, cursorScale, setCursorScale,
+    savedUsers, removeSavedUser, cursorScale, setCursorScale, cursorColor,
     taskbarTransparency, windowTransparency, isDarkMode
   } = useOSStore();
   const [isLoggingIn, setIsLoggingIn] = useState(false);
@@ -105,11 +105,15 @@ export default function App() {
     filter: `${isGrayscale ? 'grayscale(100%)' : ''} ${isInverted ? 'invert(100%)' : ''}`.trim()
   };
 
+  const effectiveCursorColor = cursorColor === 'accent' ? accentColor : cursorColor;
   const cursorSize = 32 * cursorScale;
-  const cursorSvg = `%3Csvg width='${cursorSize}' height='${cursorSize}' viewBox='0 0 32 32' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M8 4V25L13.5 19.5L17.5 28.5L20.5 27L16.5 18H23L8 4Z' fill='white' stroke='black' stroke-width='2.5' stroke-linejoin='round'/%3E%3C/svg%3E`;
+  const cursorStroke = effectiveCursorColor.toLowerCase() === 'white' || effectiveCursorColor.toLowerCase() === '#ffffff' ? 'black' : 'white';
+  const cursorSvg = `%3Csvg width='${cursorSize}' height='${cursorSize}' viewBox='0 0 32 32' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M8 4V25L13.5 19.5L17.5 28.5L20.5 27L16.5 18H23L8 4Z' fill='${encodeURIComponent(effectiveCursorColor)}' stroke='${cursorStroke}' stroke-width='2.5' stroke-linejoin='round'/%3E%3C/svg%3E`;
 
   const themeStyle = {
     '--os-accent': accentColor,
+    '--os-accent-glow': `${accentColor}33`,
+    '--os-accent-border': `${accentColor}66`,
     '--os-bg': isDarkMode ? '#0a0a0a' : '#f0f2f5',
     '--cursor-url': `url("data:image/svg+xml,${cursorSvg}")`,
     '--taskbar-opacity': taskbarTransparency / 100,

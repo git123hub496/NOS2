@@ -13,7 +13,7 @@ const ProcessManager: React.FC = () => {
       {/* Header */}
       <div className="p-6 bg-black/20 border-b border-white/5 flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <Activity className="text-blue-500" size={24} />
+          <Activity style={{ color: 'var(--os-accent)' }} size={24} />
           <div>
             <h2 className="text-xl font-semibold">Nebulabs Process Manager</h2>
             <p className="text-xs text-gray-500">System Performance & Resource Allocation</p>
@@ -35,12 +35,12 @@ const ProcessManager: React.FC = () => {
       <div className="grid grid-cols-3 gap-4 p-6">
         <div className="bg-white/5 border border-white/10 rounded-xl p-4">
           <div className="flex items-center gap-3 mb-2">
-            <Cpu className="text-blue-400" size={18} />
+            <Cpu style={{ color: 'var(--os-accent)' }} size={18} />
             <span className="text-xs font-medium text-gray-300">Processor</span>
           </div>
           <p className="text-lg font-mono">Quantum Core x86</p>
           <div className="mt-2 h-1 bg-white/5 rounded-full overflow-hidden">
-            <div className="h-full bg-blue-500 w-[12%]" />
+            <div className="h-full w-[12%]" style={{ backgroundColor: 'var(--os-accent)' }} />
           </div>
         </div>
         <div className="bg-white/5 border border-white/10 rounded-xl p-4">
@@ -82,7 +82,10 @@ const ProcessManager: React.FC = () => {
             {processes.map((p) => (
               <tr key={p.id} className="hover:bg-white/5 group transition-colors">
                 <td className="py-3 px-2 flex items-center gap-3">
-                  <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+                  <div 
+                    className="w-2 h-2 rounded-full animate-pulse"
+                    style={{ backgroundColor: 'var(--os-accent)' }}
+                  />
                   <span className="text-gray-200 font-medium">{p.name}</span>
                 </td>
                 <td className="py-3 px-2 font-mono text-blue-400">{p.memoryUsage} MB</td>

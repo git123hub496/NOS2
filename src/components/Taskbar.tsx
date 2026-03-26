@@ -61,33 +61,33 @@ const Taskbar: React.FC = () => {
   }, []);
 
   const allApps: { id: AppId; name: string; icon: React.ReactNode; color: string }[] = [
-    { id: 'search', name: 'Nebula Search', icon: <Search size={20} />, color: 'text-blue-400' },
-    { id: 'browser', name: 'Nebula Browser', icon: <Globe size={20} />, color: 'text-blue-500' },
-    { id: 'explorer', name: 'File Explorer', icon: <FileText size={20} />, color: 'text-yellow-500' },
-    { id: 'store', name: 'App Store', icon: <ShoppingBag size={20} />, color: 'text-pink-500' },
-    { id: 'ai', name: 'Nebulabs AI', icon: <Sparkles size={20} />, color: 'text-purple-500' },
-    { id: 'mail', name: 'Nebula Mail', icon: <Mail size={20} />, color: 'text-blue-300' },
-    { id: 'maps', name: 'Nebula Maps', icon: <Map size={20} />, color: 'text-green-500' },
-    { id: 'calendar', name: 'Calendar', icon: <Calendar size={20} />, color: 'text-red-400' },
-    { id: 'calculator', name: 'Calculator', icon: <CalculatorIcon size={20} />, color: 'text-orange-500' },
-    { id: 'notepad', name: 'Notes', icon: <FileText size={20} />, color: 'text-blue-400' },
-    { id: 'recycle-bin', name: 'Recycle Bin', icon: <Trash2 size={20} />, color: 'text-gray-500' },
-    { id: 'process-manager', name: 'System Monitor', icon: <Activity size={20} />, color: 'text-red-500' },
-    { id: 'settings', name: 'Settings', icon: <SettingsIcon size={20} />, color: 'text-gray-400' },
-    { id: 'terminal', name: 'Terminal', icon: <TerminalIcon size={20} />, color: 'text-green-500' },
-    { id: 'phone', name: 'Nebula Phone', icon: <Smartphone size={20} />, color: 'text-green-400' },
-    { id: 'shop', name: 'Shop Nebulabs', icon: <ShoppingBag size={20} />, color: 'text-pink-400' },
-    { id: 'themes', name: 'Themes', icon: <Palette size={20} />, color: 'text-purple-400' },
-    { id: 'games', name: 'Nebula Games', icon: <Gamepad2 size={20} />, color: 'text-indigo-400' },
-    { id: 'minesweeper', name: 'Minesweeper', icon: <Bomb size={20} />, color: 'text-gray-400' },
-    { id: 'update', name: 'System Update', icon: <RefreshCw size={20} />, color: 'text-blue-400' },
-    { id: 'chat', name: 'Nebula Chat', icon: <MessageCircle size={20} />, color: 'text-green-400' },
-    { id: 'info', name: 'System Info', icon: <Info size={20} />, color: 'text-blue-300' },
-    { id: 'camera', name: 'Nebula Camera', icon: <Camera size={20} />, color: 'text-gray-300' },
-    { id: 'tv', name: 'Nebula TV', icon: <Tv size={20} />, color: 'text-red-500' },
-    { id: 'sticky-notes', name: 'Sticky Notes', icon: <StickyNote size={20} />, color: 'text-yellow-400' },
-    { id: 'fonts', name: 'Fonts', icon: <Type size={20} />, color: 'text-gray-200' },
-    { id: 'car', name: 'Nebula Drive', icon: <Car size={20} />, color: 'text-gray-400' },
+    { id: 'search', name: 'Nebula Search', icon: <Search size={20} />, color: 'var(--os-accent)' },
+    { id: 'browser', name: 'Nebula Browser', icon: <Globe size={20} />, color: 'var(--os-accent)' },
+    { id: 'explorer', name: 'File Explorer', icon: <FileText size={20} />, color: 'var(--os-accent)' },
+    { id: 'store', name: 'App Store', icon: <ShoppingBag size={20} />, color: 'var(--os-accent)' },
+    { id: 'ai', name: 'Nebulabs AI', icon: <Sparkles size={20} />, color: 'var(--os-accent)' },
+    { id: 'mail', name: 'Nebula Mail', icon: <Mail size={20} />, color: 'var(--os-accent)' },
+    { id: 'maps', name: 'Nebula Maps', icon: <Map size={20} />, color: 'var(--os-accent)' },
+    { id: 'calendar', name: 'Calendar', icon: <Calendar size={20} />, color: 'var(--os-accent)' },
+    { id: 'calculator', name: 'Calculator', icon: <CalculatorIcon size={20} />, color: 'var(--os-accent)' },
+    { id: 'notepad', name: 'Notes', icon: <FileText size={20} />, color: 'var(--os-accent)' },
+    { id: 'recycle-bin', name: 'Recycle Bin', icon: <Trash2 size={20} />, color: 'var(--os-accent)' },
+    { id: 'process-manager', name: 'System Monitor', icon: <Activity size={20} />, color: 'var(--os-accent)' },
+    { id: 'settings', name: 'Settings', icon: <SettingsIcon size={20} />, color: 'var(--os-accent)' },
+    { id: 'terminal', name: 'Terminal', icon: <TerminalIcon size={20} />, color: 'var(--os-accent)' },
+    { id: 'phone', name: 'Nebula Phone', icon: <Smartphone size={20} />, color: 'var(--os-accent)' },
+    { id: 'shop', name: 'Shop Nebulabs', icon: <ShoppingBag size={20} />, color: 'var(--os-accent)' },
+    { id: 'themes', name: 'Themes', icon: <Palette size={20} />, color: 'var(--os-accent)' },
+    { id: 'games', name: 'Nebula Games', icon: <Gamepad2 size={20} />, color: 'var(--os-accent)' },
+    { id: 'minesweeper', name: 'Minesweeper', icon: <Bomb size={20} />, color: 'var(--os-accent)' },
+    { id: 'update', name: 'System Update', icon: <RefreshCw size={20} />, color: 'var(--os-accent)' },
+    { id: 'chat', name: 'Nebula Chat', icon: <MessageCircle size={20} />, color: 'var(--os-accent)' },
+    { id: 'info', name: 'System Info', icon: <Info size={20} />, color: 'var(--os-accent)' },
+    { id: 'camera', name: 'Nebula Camera', icon: <Camera size={20} />, color: 'var(--os-accent)' },
+    { id: 'tv', name: 'Nebula TV', icon: <Tv size={20} />, color: 'var(--os-accent)' },
+    { id: 'sticky-notes', name: 'Sticky Notes', icon: <StickyNote size={20} />, color: 'var(--os-accent)' },
+    { id: 'fonts', name: 'Fonts', icon: <Type size={20} />, color: 'var(--os-accent)' },
+    { id: 'car', name: 'Nebula Drive', icon: <Car size={20} />, color: 'var(--os-accent)' },
   ];
 
   const pinnedApps = allApps.filter(app => pinnedAppIds.includes(app.id));
@@ -181,7 +181,8 @@ const Taskbar: React.FC = () => {
         <div className={`flex items-center gap-2 ${isVertical ? 'flex-col' : 'flex-row'}`}>
           <button 
             onClick={() => setIsStartOpen(!isStartOpen)}
-            className={`p-2 rounded-lg transition-all flex items-center justify-center ${isStartOpen ? 'bg-blue-600 text-white' : 'hover:bg-white/10 text-blue-500'}`}
+            className={`p-2 rounded-lg transition-all flex items-center justify-center ${isStartOpen ? 'text-white' : 'hover:bg-white/10'}`}
+            style={{ backgroundColor: isStartOpen ? 'var(--os-accent)' : 'transparent', color: isStartOpen ? 'white' : 'var(--os-accent)' }}
           >
             <span className="text-xl font-display font-black leading-none select-none">N</span>
           </button>
@@ -189,11 +190,16 @@ const Taskbar: React.FC = () => {
           {!isVertical && (
             <div className="flex items-center gap-2">
               <div className="relative group">
-                <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 group-focus-within:text-blue-500 transition-colors" />
+                <Search 
+                  size={14} 
+                  className="absolute left-3 top-1/2 -translate-y-1/2 transition-colors" 
+                  style={{ color: 'var(--os-accent)' }}
+                />
                 <input 
                   type="text"
                   placeholder="Search Google..."
-                  className="bg-white/5 border border-white/10 rounded-full py-1.5 pl-9 pr-4 text-xs text-white outline-none focus:border-blue-500/50 focus:bg-white/10 transition-all w-48"
+                  className="bg-white/5 border border-white/10 rounded-full py-1.5 pl-9 pr-4 text-xs text-white outline-none transition-all w-48"
+                  style={{ borderColor: 'var(--os-accent-border)' }}
                   onKeyDown={(e) => {
                     if (e.key === 'Enter') {
                       openApp('browser', 'Nebula Browser');
@@ -201,9 +207,10 @@ const Taskbar: React.FC = () => {
                   }}
                 />
               </div>
-              <button 
+            <button 
                 onClick={toggleWidgets}
-                className={`p-2 rounded-lg transition-colors ${isWidgetsOpen ? 'bg-blue-600 text-white' : 'hover:bg-white/10 text-gray-400'}`}
+                className={`p-2 rounded-lg transition-colors ${isWidgetsOpen ? 'text-white' : 'hover:bg-white/10 text-gray-400'}`}
+                style={{ backgroundColor: isWidgetsOpen ? 'var(--os-accent)' : 'transparent' }}
               >
                 <LayoutGrid size={18} />
               </button>
@@ -227,11 +234,17 @@ const Taskbar: React.FC = () => {
                 className={`p-2 rounded-lg transition-all relative group ${isActive ? 'bg-white/10' : 'hover:bg-white/5'}`}
                 title={`${app.name} (${isPinned ? 'Pinned' : 'Unpinned'})`}
               >
-                <div className={`${app.color} ${isActive ? 'scale-110' : 'group-hover:scale-110'} transition-transform`}>
+                <div 
+                  className={`${isActive ? 'scale-110' : 'group-hover:scale-110'} transition-transform`}
+                  style={{ color: app.color }}
+                >
                   {app.icon}
                 </div>
                 {isOpen && (
-                  <div className={`absolute rounded-full bg-blue-500 transition-all ${isVertical ? 'right-0.5 top-1/2 -translate-y-1/2 w-1 h-1' : 'bottom-0.5 left-1/2 -translate-x-1/2 w-1 h-1'} ${isActive ? (isVertical ? 'h-4' : 'w-4') : ''}`} />
+                  <div 
+                    className={`absolute rounded-full transition-all ${isVertical ? 'right-0.5 top-1/2 -translate-y-1/2 w-1 h-1' : 'bottom-0.5 left-1/2 -translate-x-1/2 w-1 h-1'} ${isActive ? (isVertical ? 'h-4' : 'w-4') : ''}`} 
+                    style={{ backgroundColor: 'var(--os-accent)' }}
+                  />
                 )}
               </button>
             );
@@ -278,11 +291,14 @@ const Taskbar: React.FC = () => {
 
           {!isVertical && (
             <div className="flex items-center ml-1">
-              <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center overflow-hidden border border-white/10 shadow-lg cursor-pointer hover:scale-110 transition-transform">
+              <div 
+                className="w-8 h-8 rounded-full flex items-center justify-center overflow-hidden border shadow-lg cursor-pointer hover:scale-110 transition-transform"
+                style={{ borderColor: 'var(--os-accent-border)', backgroundColor: 'var(--os-accent-glow)' }}
+              >
                 {user?.photoURL ? (
                   <img src={user.photoURL} alt={user.displayName || ''} className="w-full h-full object-cover" />
                 ) : (
-                  <UserIcon size={16} className="text-white" />
+                  <UserIcon size={16} style={{ color: 'var(--os-accent)' }} />
                 )}
               </div>
             </div>

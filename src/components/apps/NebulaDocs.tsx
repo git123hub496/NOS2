@@ -10,7 +10,7 @@ const NebulaDocs: React.FC = () => {
       {/* Ribbon */}
       <div className="bg-[#f3f3f3] border-b border-gray-300 p-2 flex flex-col gap-2">
         <div className="flex items-center gap-4 px-2">
-          <FileText className="text-blue-600" size={20} />
+          <FileText style={{ color: 'var(--os-accent)' }} size={20} />
           <input 
             value={title}
             onChange={(e) => setTitle(e.target.value)}
@@ -40,7 +40,7 @@ const NebulaDocs: React.FC = () => {
       </div>
 
       {/* Status Bar */}
-      <div className="h-6 bg-blue-600 text-white text-[10px] flex items-center px-4 justify-between">
+      <div className="h-6 text-white text-[10px] flex items-center px-4 justify-between" style={{ backgroundColor: 'var(--os-accent)' }}>
         <span>Page 1 of 1</span>
         <span>0 words</span>
       </div>

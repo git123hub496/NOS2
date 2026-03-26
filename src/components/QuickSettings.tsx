@@ -46,21 +46,24 @@ const QuickSettings: React.FC = () => {
       <div className="grid grid-cols-3 gap-2 mb-6">
         <button 
           onClick={toggleGrayscale}
-          className={`flex flex-col items-center gap-2 p-3 rounded-xl transition-colors ${isGrayscale ? 'bg-blue-600 text-white' : 'bg-white/5 text-gray-400 hover:bg-white/10'}`}
+          className={`flex flex-col items-center gap-2 p-3 rounded-xl transition-colors ${isGrayscale ? 'text-white' : 'bg-white/5 text-gray-400 hover:bg-white/10'}`}
+          style={{ backgroundColor: isGrayscale ? 'var(--os-accent)' : undefined }}
         >
           <Eye size={20} />
           <span className="text-[10px] font-medium">Grayscale</span>
         </button>
         <button 
           onClick={toggleInvert}
-          className={`flex flex-col items-center gap-2 p-3 rounded-xl transition-colors ${isInverted ? 'bg-blue-600 text-white' : 'bg-white/5 text-gray-400 hover:bg-white/10'}`}
+          className={`flex flex-col items-center gap-2 p-3 rounded-xl transition-colors ${isInverted ? 'text-white' : 'bg-white/5 text-gray-400 hover:bg-white/10'}`}
+          style={{ backgroundColor: isInverted ? 'var(--os-accent)' : undefined }}
         >
           <Monitor size={20} />
           <span className="text-[10px] font-medium">Invert</span>
         </button>
         <button 
           onClick={() => setLiteMode(!isLiteMode)}
-          className={`flex flex-col items-center gap-2 p-3 rounded-xl transition-colors ${isLiteMode ? 'bg-blue-600 text-white' : 'bg-white/5 text-gray-400 hover:bg-white/10'}`}
+          className={`flex flex-col items-center gap-2 p-3 rounded-xl transition-colors ${isLiteMode ? 'text-white' : 'bg-white/5 text-gray-400 hover:bg-white/10'}`}
+          style={{ backgroundColor: isLiteMode ? 'var(--os-accent)' : undefined }}
         >
           <Zap size={20} />
           <span className="text-[10px] font-medium">Lite Mode</span>
@@ -74,14 +77,15 @@ const QuickSettings: React.FC = () => {
             <span>Network</span>
             <button 
               onClick={() => setIsNetworkOpen(!isNetworkOpen)}
-              className="text-blue-500 hover:underline"
+              className="hover:underline"
+              style={{ color: 'var(--os-accent)' }}
             >
               {isNetworkOpen ? 'Close' : 'Change'}
             </button>
           </div>
           <div className="p-3 bg-white/5 rounded-xl border border-white/5 flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <Wifi size={16} className="text-blue-500" />
+              <Wifi size={16} style={{ color: 'var(--os-accent)' }} />
               <span className="text-xs font-medium">{selectedNetwork}</span>
             </div>
             <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
@@ -101,7 +105,8 @@ const QuickSettings: React.FC = () => {
                       setNetwork(net.id);
                       setIsNetworkOpen(false);
                     }}
-                    className={`w-full flex items-center justify-between p-2 rounded-lg text-xs transition-colors ${selectedNetwork === net.name ? 'bg-blue-600/20 text-blue-400' : 'hover:bg-white/5 text-gray-400'}`}
+                    className={`w-full flex items-center justify-between p-2 rounded-lg text-xs transition-colors ${selectedNetwork === net.name ? 'text-white' : 'hover:bg-white/5 text-gray-400'}`}
+                    style={{ backgroundColor: selectedNetwork === net.name ? 'var(--os-accent)' : undefined }}
                   >
                     <div className="flex items-center gap-2">
                       <Wifi size={12} />
@@ -158,7 +163,8 @@ const QuickSettings: React.FC = () => {
                   restart();
                 }
               }}
-              className="flex items-center gap-2 px-3 py-1.5 bg-blue-500/10 text-blue-500 rounded-lg hover:bg-blue-500/20 transition-colors text-[10px] font-bold uppercase tracking-wider"
+              className="flex items-center gap-2 px-3 py-1.5 rounded-lg transition-colors text-[10px] font-bold uppercase tracking-wider"
+              style={{ backgroundColor: 'var(--os-accent-glow)', color: 'var(--os-accent)' }}
             >
               <RotateCcw size={14} />
               Restart

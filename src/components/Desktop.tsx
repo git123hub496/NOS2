@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useOSStore } from '../store';
 import Taskbar from './Taskbar';
@@ -52,28 +52,119 @@ import {
   Type,
   Car,
   ChevronRight,
-  Power
+  Power,
+  Monitor,
+  FolderPlus,
+  RotateCw,
+  Eye,
+  ArrowUpDown,
+  Plus
 } from 'lucide-react';
 
 const Desktop: React.FC = () => {
   const { 
     wallpaper, openApp, isLiteMode, user,
-    isWidgetsOpen, isChatOpen, toggleWidgets, toggleChat
+    isWidgetsOpen, isChatOpen, toggleWidgets, toggleChat,
+    accentColor
   } = useOSStore();
 
+  const [contextMenu, setContextMenu] = useState<{ x: number, y: number } | null>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setContextMenu(null);
+      }
+    };
+    window.addEventListener('mousedown', handleClickOutside);
+    return () => window.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const handleContextMenu = (e: React.MouseEvent) => {
+    e.preventDefault();
+    // Ensure menu stays within viewport
+    let x = e.clientX;
+    let y = e.clientY;
+    const menuWidth = 220;
+    const menuHeight = 300;
+    if (x + menuWidth > window.innerWidth) x -= menuWidth;
+    if (y + menuHeight > window.innerHeight) y -= menuHeight;
+    setContextMenu({ x, y });
+  };
+
   const desktopIcons = [
-    { id: 'recycle-bin', name: 'Recycle Bin', icon: <Trash2 size={32} />, color: 'text-gray-500' },
-    { id: 'explorer', name: 'File Explorer', icon: <FileText size={32} />, color: 'text-yellow-500' },
-    { id: 'browser', name: 'Nebula Browser', icon: <Globe size={32} />, color: 'text-blue-500' },
-    { id: 'settings', name: 'Settings', icon: <SettingsIcon size={32} />, color: 'text-gray-400' },
-    { id: 'ai', name: 'Nebulabs AI', icon: <Sparkles size={32} />, color: 'text-purple-500' },
+    { id: 'recycle-bin', name: 'Recycle Bin', icon: <Trash2 size={32} />, color: 'var(--os-accent)' },
+    { id: 'explorer', name: 'File Explorer', icon: <FileText size={32} />, color: 'var(--os-accent)' },
+    { id: 'browser', name: 'Nebula Browser', icon: <Globe size={32} />, color: 'var(--os-accent)' },
+    { id: 'settings', name: 'Settings', icon: <SettingsIcon size={32} />, color: 'var(--os-accent)' },
+    { id: 'ai', name: 'Nebulabs AI', icon: <Sparkles size={32} />, color: 'var(--os-accent)' },
+  ];
+
+  const contextMenuItems = [
+    { id: 'view', label: 'View', icon: <Eye size={14} />, subItems: ['Large icons', 'Medium icons', 'Small icons'] },
+    { id: 'sort', label: 'Sort by', icon: <ArrowUpDown size={14} />, subItems: ['Name', 'Size', 'Item type', 'Date modified'] },
+    { id: 'refresh', label: 'Refresh', icon: <RotateCw size={14} />, action: () => window.location.reload() },
+    { separator: true },
+    { id: 'new', label: 'New', icon: <Plus size={14} />, subItems: ['Folder', 'Shortcut', 'Text Document'] },
+    { separator: true },
+    { id: 'display', label: 'Display settings', icon: <Monitor size={14} />, action: () => openApp('settings', 'Settings') },
+    { id: 'personalize', label: 'Personalize', icon: <Palette size={14} />, action: () => openApp('settings', 'Settings') },
   ];
 
   return (
     <div 
       className={`fixed inset-0 overflow-hidden bg-cover bg-center transition-all duration-1000 ${isLiteMode ? 'lite-mode' : ''}`}
       style={{ backgroundImage: `url(${wallpaper})` }}
+      onContextMenu={handleContextMenu}
+      onClick={() => setContextMenu(null)}
     >
+      {/* Wallpaper Tint Overlay */}
+      <div 
+        className="absolute inset-0 pointer-events-none opacity-20 transition-colors duration-1000"
+        style={{ backgroundColor: 'var(--os-accent)' }}
+      />
+
+      {/* Context Menu */}
+      <AnimatePresence>
+        {contextMenu && (
+          <motion.div
+            ref={menuRef}
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.95 }}
+            transition={{ duration: 0.1 }}
+            className="fixed z-[9999] w-[220px] bg-[#0a0c10]/95 backdrop-blur-xl border border-white/10 rounded-xl shadow-2xl py-1.5 overflow-hidden"
+            style={{ left: contextMenu.x, top: contextMenu.y }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {contextMenuItems.map((item, i) => (
+              item.separator ? (
+                <div key={`sep-${i}`} className="h-px bg-white/5 my-1.5 mx-3" />
+              ) : (
+                <button
+                  key={item.id}
+                  onClick={() => {
+                    item.action?.();
+                    setContextMenu(null);
+                  }}
+                  className="w-full flex items-center justify-between px-3 py-1.5 text-xs text-gray-300 hover:bg-white/10 hover:text-white transition-colors group relative"
+                >
+                  <div className="flex items-center gap-3">
+                    <span className="text-gray-500 group-hover:text-blue-400 transition-colors">
+                      {item.icon}
+                    </span>
+                    <span>{item.label}</span>
+                  </div>
+                  {item.subItems && (
+                    <ChevronRight size={12} className="text-gray-600" />
+                  )}
+                </button>
+              )
+            ))}
+          </motion.div>
+        )}
+      </AnimatePresence>
       {/* Desktop Icons */}
       <div className="p-4 grid grid-flow-col grid-rows-[repeat(auto-fill,100px)] gap-2 w-fit">
         {desktopIcons.map((icon) => (
@@ -82,7 +173,10 @@ const Desktop: React.FC = () => {
             onDoubleClick={() => openApp(icon.id as any, icon.name)}
             className="w-24 h-24 flex flex-col items-center justify-center gap-2 rounded-lg hover:bg-white/10 transition-colors group"
           >
-            <div className={`${icon.color} group-hover:scale-110 transition-transform drop-shadow-lg`}>
+            <div 
+              className="group-hover:scale-110 transition-transform drop-shadow-lg"
+              style={{ color: icon.color }}
+            >
               {icon.icon}
             </div>
             <span className="text-[11px] text-white font-medium text-center drop-shadow-md px-1">
@@ -195,8 +289,11 @@ const Desktop: React.FC = () => {
             {[1,2,3].map(i => (
               <div key={i} className="flex items-center justify-between p-4 rounded-2xl bg-white/5 border border-white/10">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center">
-                    <ShoppingBag size={18} className="text-blue-400" />
+                  <div 
+                    className="w-10 h-10 rounded-full flex items-center justify-center"
+                    style={{ backgroundColor: 'var(--os-accent-glow)' }}
+                  >
+                    <ShoppingBag size={18} style={{ color: 'var(--os-accent)' }} />
                   </div>
                   <div>
                     <p className="text-sm font-bold text-white">Nebula Store Purchase</p>
@@ -213,8 +310,11 @@ const Desktop: React.FC = () => {
         <div className="h-full flex flex-col bg-[#050505] p-6">
           <div className="flex justify-between items-center mb-8">
             <h2 className="text-2xl font-bold text-white">Health</h2>
-            <div className="w-10 h-10 rounded-full bg-red-500/10 flex items-center justify-center">
-              <Heart size={20} className="text-red-500 animate-pulse" />
+            <div 
+              className="w-10 h-10 rounded-full flex items-center justify-center"
+              style={{ backgroundColor: 'var(--os-accent-glow)' }}
+            >
+              <Heart size={20} className="animate-pulse" style={{ color: 'var(--os-accent)' }} />
             </div>
           </div>
           <div className="grid grid-cols-2 gap-4 mb-8">
@@ -222,11 +322,15 @@ const Desktop: React.FC = () => {
               <p className="text-[10px] text-gray-500 uppercase tracking-widest mb-2">Heart Rate</p>
               <div className="flex items-baseline gap-2">
                 <h3 className="text-3xl font-bold text-white">72</h3>
-                <span className="text-xs text-red-500 font-bold">BPM</span>
+                <span className="text-xs font-bold" style={{ color: 'var(--os-accent)' }}>BPM</span>
               </div>
               <div className="mt-4 h-12 flex items-end gap-1">
                 {[4,6,3,8,5,7,4,6,5,8].map((h, i) => (
-                  <div key={i} className="flex-1 bg-red-500/20 rounded-t-sm" style={{ height: `${h * 10}%` }} />
+                  <div 
+                    key={i} 
+                    className="flex-1 rounded-t-sm" 
+                    style={{ height: `${h * 10}%`, backgroundColor: 'var(--os-accent-glow)' }} 
+                  />
                 ))}
               </div>
             </div>
@@ -234,34 +338,44 @@ const Desktop: React.FC = () => {
               <p className="text-[10px] text-gray-500 uppercase tracking-widest mb-2">Sleep</p>
               <div className="flex items-baseline gap-2">
                 <h3 className="text-3xl font-bold text-white">7.5</h3>
-                <span className="text-xs text-blue-400 font-bold">HRS</span>
+                <span className="text-xs font-bold" style={{ color: 'var(--os-accent)' }}>HRS</span>
               </div>
               <div className="mt-4 h-12 flex items-end gap-1">
                 {[3,5,7,8,6,4,5,7,8,6].map((h, i) => (
-                  <div key={i} className="flex-1 bg-blue-500/20 rounded-t-sm" style={{ height: `${h * 10}%` }} />
+                   <div 
+                    key={i} 
+                    className="flex-1 rounded-t-sm" 
+                    style={{ height: `${h * 10}%`, backgroundColor: 'var(--os-accent-glow)' }} 
+                  />
                 ))}
               </div>
             </div>
           </div>
-          <div className="bg-gradient-to-br from-red-600/20 to-orange-600/20 border border-red-500/20 rounded-3xl p-6">
+          <div 
+            className="border rounded-3xl p-6"
+            style={{ 
+              background: 'linear-gradient(to bottom right, var(--os-accent-glow), transparent)',
+              borderColor: 'var(--os-accent-border)'
+            }}
+          >
             <h3 className="text-sm font-bold text-white mb-4">Daily Activity</h3>
             <div className="space-y-4">
               <div className="space-y-2">
                 <div className="flex justify-between text-[10px] uppercase font-bold">
                   <span className="text-gray-400">Move</span>
-                  <span className="text-red-500">450 / 600 KCAL</span>
+                  <span style={{ color: 'var(--os-accent)' }}>450 / 600 KCAL</span>
                 </div>
                 <div className="h-2 bg-white/5 rounded-full overflow-hidden">
-                  <div className="h-full bg-red-500 w-[75%]" />
+                  <div className="h-full w-[75%]" style={{ backgroundColor: 'var(--os-accent)' }} />
                 </div>
               </div>
               <div className="space-y-2">
                 <div className="flex justify-between text-[10px] uppercase font-bold">
                   <span className="text-gray-400">Exercise</span>
-                  <span className="text-green-500">22 / 30 MIN</span>
+                  <span style={{ color: 'var(--os-accent)' }}>22 / 30 MIN</span>
                 </div>
                 <div className="h-2 bg-white/5 rounded-full overflow-hidden">
-                  <div className="h-full bg-green-500 w-[73%]" />
+                  <div className="h-full w-[73%]" style={{ backgroundColor: 'var(--os-accent)' }} />
                 </div>
               </div>
             </div>
@@ -294,13 +408,13 @@ const Desktop: React.FC = () => {
                     <h3 className="text-4xl font-bold text-white">39°</h3>
                     <p className="text-xs text-gray-400">Partly Cloudy</p>
                   </div>
-                  <Cloud size={48} className="text-blue-400" />
+                  <Cloud size={48} style={{ color: 'var(--os-accent)' }} />
                 </div>
               </div>
 
               <div className="bg-white/10 backdrop-blur-md rounded-2xl p-4 mb-4">
                 <div className="flex items-center gap-3 mb-2">
-                  <CreditCard size={16} className="text-indigo-400" />
+                  <CreditCard size={16} style={{ color: 'var(--os-accent)' }} />
                   <span className="text-[10px] text-gray-400 uppercase font-bold">Nebula Pay</span>
                 </div>
                 <p className="text-xs text-white font-bold">Active Link</p>
@@ -308,7 +422,7 @@ const Desktop: React.FC = () => {
 
               <div className="bg-white/10 backdrop-blur-md rounded-2xl p-4 mb-6">
                 <div className="flex items-center gap-3 mb-2">
-                  <Heart size={16} className="text-red-500" />
+                  <Heart size={16} style={{ color: 'var(--os-accent)' }} />
                   <span className="text-[10px] text-gray-400 uppercase font-bold">Vitals</span>
                 </div>
                 <p className="text-xs text-white font-bold">72 BPM</p>
@@ -318,13 +432,16 @@ const Desktop: React.FC = () => {
 
               <div className="grid grid-cols-4 gap-4 mb-4">
                 {[
-                  { icon: <MessageSquare size={20} />, color: 'bg-green-500', label: 'Messages' },
-                  { icon: <CreditCard size={20} />, color: 'bg-blue-600', label: 'Pay' },
-                  { icon: <Globe size={20} />, color: 'bg-blue-400', label: 'Photos' },
-                  { icon: <SettingsIcon size={20} />, color: 'bg-gray-600', label: 'Settings' },
+                  { icon: <MessageSquare size={20} />, label: 'Messages' },
+                  { icon: <CreditCard size={20} />, label: 'Pay' },
+                  { icon: <Globe size={20} />, label: 'Photos' },
+                  { icon: <SettingsIcon size={20} />, label: 'Settings' },
                 ].map((app, i) => (
                   <div key={i} className="flex flex-col items-center gap-1">
-                    <div className={`${app.color} w-10 h-10 rounded-xl flex items-center justify-center text-white shadow-lg`}>
+                    <div 
+                      className="w-10 h-10 rounded-xl flex items-center justify-center text-white shadow-lg"
+                      style={{ backgroundColor: 'var(--os-accent)' }}
+                    >
                       {app.icon}
                     </div>
                     <span className="text-[8px] text-gray-400 uppercase font-bold">{app.label}</span>
@@ -334,13 +451,16 @@ const Desktop: React.FC = () => {
               
               <div className="grid grid-cols-4 gap-4">
                 {[
-                  { icon: <Globe size={20} />, color: 'bg-blue-500', label: 'Browser' },
-                  { icon: <SearchIcon size={20} />, color: 'bg-blue-600', label: 'Search' },
-                  { icon: <Heart size={20} />, color: 'bg-red-500', label: 'Health' },
-                  { icon: <ShoppingBag size={20} />, color: 'bg-orange-500', label: 'Store' },
+                  { icon: <Globe size={20} />, label: 'Browser' },
+                  { icon: <SearchIcon size={20} />, label: 'Search' },
+                  { icon: <Heart size={20} />, label: 'Health' },
+                  { icon: <ShoppingBag size={20} />, label: 'Store' },
                 ].map((app, i) => (
                   <div key={i} className="flex flex-col items-center gap-1">
-                    <div className={`${app.color} w-10 h-10 rounded-xl flex items-center justify-center text-white shadow-lg`}>
+                    <div 
+                      className="w-10 h-10 rounded-xl flex items-center justify-center text-white shadow-lg"
+                      style={{ backgroundColor: 'var(--os-accent)' }}
+                    >
                       {app.icon}
                     </div>
                     <span className="text-[8px] text-gray-400 uppercase font-bold">{app.label}</span>
@@ -366,7 +486,7 @@ const Desktop: React.FC = () => {
 
       <Window id="recycle-bin" title="Recycle Bin">
         <div className="h-full bg-[#0a0a0a] p-8 flex flex-col items-center justify-center text-gray-500">
-          <Trash2 size={64} className="mb-4 opacity-20" />
+          <Trash2 size={64} className="mb-4 opacity-20" style={{ color: 'var(--os-accent)' }} />
           <p className="text-sm">Your recycle bin is empty</p>
         </div>
       </Window>
@@ -542,7 +662,12 @@ const Desktop: React.FC = () => {
           </div>
           <h2 className="text-3xl font-black text-white mb-4">NEBULA OS 2.5</h2>
           <p className="text-gray-500 text-sm max-w-md mb-8">Your system is up to date. Last checked: Today at 14:20</p>
-          <button className="px-8 py-3 rounded-full bg-blue-600 text-white font-bold hover:bg-blue-500 transition-colors shadow-lg shadow-blue-600/20">Check for Updates</button>
+          <button 
+            className="px-8 py-3 rounded-full text-white font-bold transition-colors shadow-lg"
+            style={{ backgroundColor: 'var(--os-accent)', boxShadow: '0 10px 15px -3px var(--os-accent-glow)' }}
+          >
+            Check for Updates
+          </button>
         </div>
       </Window>
 
@@ -553,10 +678,15 @@ const Desktop: React.FC = () => {
       <Window id="info" title="System Info">
         <div className="h-full bg-[#050505] p-12 overflow-auto">
           <div className="flex items-center gap-8 mb-12">
-            <div className="w-32 h-32 rounded-3xl bg-blue-600 flex items-center justify-center text-white text-6xl font-black shadow-2xl">N</div>
+            <div 
+              className="w-32 h-32 rounded-3xl flex items-center justify-center text-white text-6xl font-black shadow-2xl"
+              style={{ backgroundColor: 'var(--os-accent)' }}
+            >
+              N
+            </div>
             <div>
               <h2 className="text-4xl font-black text-white mb-2">NEBULA OS</h2>
-              <p className="text-blue-500 font-bold uppercase tracking-widest">Version 2.5.0 Professional</p>
+              <p className="font-bold uppercase tracking-widest" style={{ color: 'var(--os-accent)' }}>Version 2.5.0 Professional</p>
             </div>
           </div>
           <div className="grid grid-cols-2 gap-8">
@@ -621,7 +751,12 @@ const Desktop: React.FC = () => {
             <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent flex flex-col justify-end p-12 opacity-0 group-hover:opacity-100 transition-opacity">
               <h2 className="text-4xl font-black text-white mb-2">NEBULA ORIGINALS</h2>
               <p className="text-sm text-gray-400 max-w-xl mb-8">Experience the future of entertainment with high-fidelity streaming and exclusive content only on Nebula TV.</p>
-              <button className="w-fit px-12 py-4 rounded-full bg-white text-black font-bold hover:scale-105 transition-transform">Watch Now</button>
+              <button 
+                className="w-fit px-12 py-4 rounded-full text-black font-bold hover:scale-105 transition-transform"
+                style={{ backgroundColor: 'white' }}
+              >
+                Watch Now
+              </button>
             </div>
           </div>
           <div className="h-32 bg-[#050505] p-6 flex items-center gap-6 overflow-x-auto custom-scrollbar">
@@ -740,12 +875,12 @@ const Desktop: React.FC = () => {
                   <h3 className="text-3xl font-bold text-white">39°</h3>
                   <p className="text-xs text-gray-400">Partly Cloudy</p>
                 </div>
-                <Cloud size={40} className="text-blue-400" />
+                <Cloud size={40} style={{ color: 'var(--os-accent)' }} />
               </div>
             </div>
 
             <div className="flex-1 bg-white/5 rounded-3xl p-6 border border-white/10 overflow-hidden flex flex-col">
-              <div className="flex items-center gap-3 mb-4 text-orange-400">
+              <div className="flex items-center gap-3 mb-4" style={{ color: 'var(--os-accent)' }}>
                 <Newspaper size={20} />
                 <span className="text-[10px] uppercase tracking-widest font-bold">Top Stories</span>
               </div>
@@ -757,7 +892,10 @@ const Desktop: React.FC = () => {
                   "New space station module successfully docked"
                 ].map((news, i) => (
                   <div key={i} className="border-b border-white/5 pb-3 last:border-0">
-                    <p className="text-xs text-gray-300 leading-relaxed hover:text-blue-400 cursor-pointer transition-colors">
+                    <p 
+                      className="text-xs text-gray-300 leading-relaxed cursor-pointer transition-colors"
+                      style={{ '--hover-color': 'var(--os-accent)' } as any}
+                    >
                       {news}
                     </p>
                     <span className="text-[9px] text-gray-600 mt-1 block uppercase">2 hours ago</span>
@@ -780,12 +918,15 @@ const Desktop: React.FC = () => {
           >
             <div className="p-6 border-b border-white/5 flex items-center justify-between bg-white/5">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center">
+                <div 
+                  className="w-10 h-10 rounded-full flex items-center justify-center"
+                  style={{ backgroundColor: 'var(--os-accent)' }}
+                >
                   <Sparkles size={20} className="text-white" />
                 </div>
                 <div>
                   <h2 className="text-sm font-bold text-white">Nebula Chat</h2>
-                  <p className="text-[10px] text-green-500 uppercase font-bold">AI Assistant Online</p>
+                  <p className="text-[10px] uppercase font-bold" style={{ color: 'var(--os-accent)' }}>AI Assistant Online</p>
                 </div>
               </div>
               <button onClick={toggleChat} className="text-gray-500 hover:text-white transition-colors">
@@ -795,7 +936,10 @@ const Desktop: React.FC = () => {
 
             <div className="flex-1 p-6 overflow-auto space-y-4 custom-scrollbar">
               <div className="flex gap-3">
-                <div className="w-8 h-8 rounded-full bg-blue-600 flex-shrink-0 flex items-center justify-center">
+                <div 
+                  className="w-8 h-8 rounded-full flex-shrink-0 flex items-center justify-center"
+                  style={{ backgroundColor: 'var(--os-accent)' }}
+                >
                   <Sparkles size={14} className="text-white" />
                 </div>
                 <div className="bg-white/5 rounded-2xl rounded-tl-none p-4 max-w-[80%]">
@@ -813,7 +957,10 @@ const Desktop: React.FC = () => {
                     <UserIcon size={14} className="text-white" />
                   )}
                 </div>
-                <div className="bg-blue-600 rounded-2xl rounded-tr-none p-4 max-w-[80%]">
+                <div 
+                  className="rounded-2xl rounded-tr-none p-4 max-w-[80%]"
+                  style={{ backgroundColor: 'var(--os-accent)' }}
+                >
                   <p className="text-xs text-white leading-relaxed">
                     What's the weather like?
                   </p>
@@ -824,10 +971,14 @@ const Desktop: React.FC = () => {
             <div className="p-4 bg-white/5 border-t border-white/5">
               <div className="relative">
                 <input 
-                  className="w-full bg-white/5 border border-white/10 rounded-2xl py-3 pl-4 pr-12 text-xs text-white outline-none focus:border-blue-500/50 transition-all"
+                  className="w-full bg-white/5 border border-white/10 rounded-2xl py-3 pl-4 pr-12 text-xs text-white outline-none transition-all"
+                  style={{ borderColor: 'var(--os-accent-border)' }}
                   placeholder="Ask Nebula AI..."
                 />
-                <button className="absolute right-2 top-1.5 p-1.5 bg-blue-600 text-white rounded-xl hover:bg-blue-500 transition-colors">
+                <button 
+                  className="absolute right-2 top-1.5 p-1.5 text-white rounded-xl transition-colors"
+                  style={{ backgroundColor: 'var(--os-accent)' }}
+                >
                   <Send size={16} />
                 </button>
               </div>

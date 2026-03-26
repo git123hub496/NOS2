@@ -34,6 +34,7 @@ const BOOT_SEQUENCE = [
 ];
 
 const BIOS: React.FC<BIOSProps> = ({ onComplete }) => {
+  const { accentColor } = useOSStore();
   const [lines, setLines] = useState<string[]>([]);
   const [showLogo, setShowLogo] = useState(false);
   const [isBIOSSetup, setIsBIOSSetup] = useState(false);
@@ -175,9 +176,15 @@ const BIOS: React.FC<BIOSProps> = ({ onComplete }) => {
 
   if (isBIOSSetup) {
     return (
-      <div className="fixed inset-0 bg-[#0000AA] text-white font-mono p-4 z-[9999] select-none flex flex-col">
+      <div 
+        className="fixed inset-0 text-white font-mono p-4 z-[9999] select-none flex flex-col transition-colors duration-500"
+        style={{ backgroundColor: 'var(--os-accent)' }}
+      >
         {/* Header */}
-        <div className="border-2 border-gray-400 p-1 mb-4 flex justify-between items-center bg-[#0000AA]">
+        <div 
+          className="border-2 p-1 mb-4 flex justify-between items-center"
+          style={{ borderColor: 'rgba(255,255,255,0.3)', backgroundColor: 'rgba(0,0,0,0.4)' }}
+        >
           <span className="px-2">Nebulabs Setup Utility - Version 4.5.2 (C) 2026 Nebulabs OS.</span>
           <span className="px-2 text-gray-400">FIRMWARE SETUP</span>
         </div>
@@ -187,7 +194,8 @@ const BIOS: React.FC<BIOSProps> = ({ onComplete }) => {
           {TABS.map((tab) => (
             <div 
               key={tab}
-              className={`px-4 py-0.5 ${activeTab === tab ? 'bg-white text-[#0000AA]' : 'text-gray-300'}`}
+              className={`px-4 py-0.5 ${activeTab === tab ? 'bg-white' : 'text-gray-300'}`}
+              style={{ color: activeTab === tab ? 'var(--os-accent)' : undefined }}
             >
               {tab}
             </div>
@@ -202,7 +210,8 @@ const BIOS: React.FC<BIOSProps> = ({ onComplete }) => {
               {currentTabItems.map((item, index) => (
                 <div 
                   key={item.label}
-                  className={`flex justify-between items-center px-2 py-0.5 ${selectedItemIndex === index ? 'bg-white text-[#0000AA]' : ''}`}
+                  className={`flex justify-between items-center px-2 py-0.5 ${selectedItemIndex === index ? 'bg-white' : ''}`}
+                  style={{ color: selectedItemIndex === index ? 'var(--os-accent)' : undefined }}
                 >
                   <span className="uppercase">{item.label}</span>
                   <span className="font-bold">{item.value}</span>
@@ -282,10 +291,11 @@ const BIOS: React.FC<BIOSProps> = ({ onComplete }) => {
               <motion.div 
                 animate={{ rotate: 360 }}
                 transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
-                className="w-16 h-16 border-4 border-blue-500 border-t-transparent rounded-full mx-auto mb-4"
+                className="w-16 h-16 border-4 border-t-transparent rounded-full mx-auto mb-4"
+                style={{ borderColor: 'var(--os-accent)', borderTopColor: 'transparent' }}
               />
               <h1 className="text-4xl font-display font-bold tracking-tighter text-white">
-                NEBULABS <span className="text-blue-500">OS 2</span>
+                NEBULABS <span style={{ color: 'var(--os-accent)' }}>OS 2</span>
               </h1>
               <p className="text-gray-500 mt-2 text-sm uppercase tracking-widest">Initializing Environment</p>
             </div>

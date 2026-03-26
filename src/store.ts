@@ -66,8 +66,9 @@ interface OSStore {
   windowTransparency: number;
   isTaskbarAutohide: boolean;
   
-  // Cursor Scale
+  // Cursor Scale & Color
   cursorScale: number;
+  cursorColor: string;
   
   // System Update
   isUpdating: boolean;
@@ -93,6 +94,7 @@ interface OSStore {
   loginLocal: (username: string) => void;
   setLiteMode: (enabled: boolean) => void;
   setWallpaper: (url: string) => void;
+  setProfilePicture: (url: string) => void;
   setAccentColor: (color: string) => void;
   setFontStyle: (font: string) => void;
   setSetupComplete: (complete: boolean) => void;
@@ -123,6 +125,7 @@ interface OSStore {
   setWindowTransparency: (v: number) => void;
   setTaskbarAutohide: (enabled: boolean) => void;
   setCursorScale: (scale: number) => void;
+  setCursorColor: (color: string) => void;
   startUpdate: () => void;
   setNetwork: (id: string) => void;
   addSavedUser: (user: User) => void;
@@ -158,6 +161,7 @@ export const useOSStore = create<OSStore>((set, get) => ({
   isTaskbarAutohide: false,
 
   cursorScale: 1,
+  cursorColor: 'white',
   isUpdating: false,
   updateProgress: 0,
   updateStatus: 'System is up to date',
@@ -253,6 +257,7 @@ export const useOSStore = create<OSStore>((set, get) => ({
   setTaskbarTransparency: (v) => set({ taskbarTransparency: v }),
   setWindowTransparency: (v) => set({ windowTransparency: v }),
   setCursorScale: (scale) => set({ cursorScale: Math.max(0.5, Math.min(4, scale)) }),
+  setCursorColor: (color) => set({ cursorColor: color }),
 
   startUpdate: () => {
     const { isUpdating } = get();
@@ -387,10 +392,32 @@ export const useOSStore = create<OSStore>((set, get) => ({
   setWallpaper: async (url) => {
     set({ wallpaper: url });
     const { user } = get();
-    if (user) {
+    if (user && !user.isLocal) {
       const path = `users/${user.uid}`;
       try {
         await updateDoc(doc(db, path), { wallpaper: url });
+      } catch (error) {
+        handleFirestoreError(error, OperationType.UPDATE, path);
+      }
+    }
+  },
+
+  setProfilePicture: async (url: string) => {
+    const { user, savedUsers } = get();
+    if (!user) return;
+
+    const updatedUser = { ...user, photoURL: url };
+    set({ user: updatedUser });
+
+    // Update saved users list
+    const newSaved = savedUsers.map(u => u.uid === user.uid ? updatedUser : u);
+    set({ savedUsers: newSaved });
+    localStorage.setItem('nebula_saved_users', JSON.stringify(newSaved));
+
+    if (!user.isLocal) {
+      const path = `users/${user.uid}`;
+      try {
+        await updateDoc(doc(db, path), { photoURL: url });
       } catch (error) {
         handleFirestoreError(error, OperationType.UPDATE, path);
       }
