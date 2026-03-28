@@ -48,7 +48,7 @@ const Taskbar: React.FC = () => {
     toggleQuickSettings, isQuickSettingsOpen,
     taskbarPosition, setTaskbarPosition, pinnedAppIds, togglePinApp,
     user, toggleWidgets, toggleChat, isWidgetsOpen, isChatOpen,
-    taskbarTransparency, isTaskbarAutohide
+    taskbarTransparency, isTaskbarAutohide, setSearchQuery
   } = useOSStore();
   const [isStartOpen, setIsStartOpen] = useState(false);
   const [time, setTime] = useState(new Date());
@@ -202,6 +202,7 @@ const Taskbar: React.FC = () => {
                   style={{ borderColor: 'var(--os-accent-border)' }}
                   onKeyDown={(e) => {
                     if (e.key === 'Enter') {
+                      setSearchQuery(e.currentTarget.value);
                       openApp('browser', 'Nebula Browser');
                     }
                   }}

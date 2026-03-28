@@ -63,9 +63,9 @@ import {
 
 const Desktop: React.FC = () => {
   const { 
-    wallpaper, openApp, isLiteMode, user,
+    wallpaper, openApp, closeApp, isLiteMode, user,
     isWidgetsOpen, isChatOpen, toggleWidgets, toggleChat,
-    accentColor
+    accentColor, setSearchQuery
   } = useOSStore();
 
   const [contextMenu, setContextMenu] = useState<{ x: number, y: number } | null>(null);
@@ -223,10 +223,29 @@ const Desktop: React.FC = () => {
               className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 pl-12 pr-6 text-white outline-none focus:border-blue-500/50 transition-all shadow-2xl"
               placeholder="Search anything..."
               autoFocus
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  const query = e.currentTarget.value;
+                  if (query.trim()) {
+                    setSearchQuery(query);
+                    closeApp('search');
+                    openApp('browser', 'Nebula Browser');
+                  }
+                }
+              }}
             />
           </div>
           <div className="mt-8 flex gap-4">
-            <button className="px-6 py-2 rounded-full bg-white/5 border border-white/10 text-xs text-gray-400 hover:bg-white/10 transition-colors">Trending</button>
+            <button 
+              onClick={() => {
+                setSearchQuery('Nebula OS latest updates');
+                closeApp('search');
+                openApp('browser', 'Nebula Browser');
+              }}
+              className="px-6 py-2 rounded-full bg-white/5 border border-white/10 text-xs text-gray-400 hover:bg-white/10 transition-colors"
+            >
+              Trending
+            </button>
             <button className="px-6 py-2 rounded-full bg-white/5 border border-white/10 text-xs text-gray-400 hover:bg-white/10 transition-colors">History</button>
             <button className="px-6 py-2 rounded-full bg-white/5 border border-white/10 text-xs text-gray-400 hover:bg-white/10 transition-colors">Safe Search</button>
           </div>

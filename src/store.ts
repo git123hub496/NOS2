@@ -81,6 +81,8 @@ interface OSStore {
   pinnedStartAppIds: AppId[];
   isRestarting: boolean;
   isShutDown: boolean;
+  searchQuery: string;
+  browserUrl: string;
 
   // New Hardware States
   volume: number;
@@ -128,6 +130,8 @@ interface OSStore {
   setCursorColor: (color: string) => void;
   startUpdate: () => void;
   setNetwork: (id: string) => void;
+  setSearchQuery: (query: string) => void;
+  setBrowserUrl: (url: string) => void;
   addSavedUser: (user: User) => void;
   removeSavedUser: (uid: string) => void;
   
@@ -171,6 +175,8 @@ export const useOSStore = create<OSStore>((set, get) => ({
   pinnedStartAppIds: ['store', 'explorer', 'settings', 'ai', 'notepad', 'calculator', 'browser', 'recycle-bin', 'mail', 'maps', 'process-manager', 'calendar'],
   isRestarting: false,
   isShutDown: false,
+  searchQuery: '',
+  browserUrl: 'https://www.google.com/search?igu=1',
 
   volume: 80,
   selectedNetwork: 'Nebula_5G',
@@ -286,6 +292,8 @@ export const useOSStore = create<OSStore>((set, get) => ({
   },
 
   setNetwork: (id) => set({ selectedNetwork: get().networks.find(n => n.id === id)?.name || 'Disconnected' }),
+  setSearchQuery: (query) => set({ searchQuery: query }),
+  setBrowserUrl: (url) => set({ browserUrl: url }),
 
   setTaskbarPosition: async (pos) => {
     set({ taskbarPosition: pos });
