@@ -1,0 +1,18 @@
+{
+  "short_name": "Nebulabs",
+  "name": "Nebulabs OS 2",
+  "description": "A fast web OS for a PC",
+  "icons": [
+    {
+      "src": "favicon.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ],
+  "start_url": "./index.html",
+  "display": "standalone",
+  "theme_color": "#000000",
+  "background_color": "#ffffff",
+  "scope": "./"
+}
