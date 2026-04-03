@@ -21,6 +21,16 @@ export interface WindowState {
   isMinimized: boolean;
   isMaximized: boolean;
   zIndex: number;
+  displayId: string;
+}
+
+export interface Display {
+  id: string;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  isPrimary: boolean;
 }
 
 export interface User {
@@ -38,11 +48,6 @@ export interface Network {
   isSecure: boolean;
 }
 
-export interface ScreenConfig {
-  id: string;
-  isMain: boolean;
-}
-
 interface OSStore {
   isBooted: boolean;
   isLoggedIn: boolean;
@@ -55,15 +60,6 @@ interface OSStore {
   fontStyle: string;
   windows: WindowState[];
   activeWindowId: AppId | null;
-  
-  // Multi-screen
-  screens: ScreenConfig[];
-  screenOrientation: 'horizontal' | 'vertical';
-  isSyncing: boolean;
-  setSyncing: (syncing: boolean) => void;
-  addScreen: () => void;
-  removeScreen: (id: string) => void;
-  setScreenOrientation: (orientation: 'horizontal' | 'vertical') => void;
   
   // New System Services State
   processes: Process[];
@@ -103,6 +99,14 @@ interface OSStore {
   selectedNetwork: string;
   networks: Network[];
   savedUsers: User[];
+
+  // Multi-Display
+  displays: Display[];
+  currentDisplayId: string;
+  setDisplayPosition: (id: string, x: number, y: number) => void;
+  moveWindowToDisplay: (appId: AppId, displayId: string) => void;
+  registerDisplay: (display: Display) => void;
+  unregisterDisplay: (id: string) => void;
 
   boot: () => void;
   setAuthReady: (ready: boolean) => void;
@@ -184,10 +188,6 @@ export const useOSStore = create<OSStore>((set, get) => {
     windowTransparency: savedSettings.windowTransparency ?? 80,
     isTaskbarAutohide: savedSettings.isTaskbarAutohide ?? false,
 
-    screens: savedSettings.screens ?? [{ id: 'main', isMain: true }],
-    screenOrientation: savedSettings.screenOrientation ?? 'horizontal',
-    isSyncing: false,
-
     cursorScale: savedSettings.cursorScale ?? 1,
     cursorColor: savedSettings.cursorColor ?? 'white',
     isUpdating: false,
@@ -212,6 +212,38 @@ export const useOSStore = create<OSStore>((set, get) => {
     ],
     savedUsers: JSON.parse(localStorage.getItem('nebula_saved_users') || '[]'),
 
+    displays: [],
+    currentDisplayId: Math.random().toString(36).substr(2, 9),
+
+    setDisplayPosition: (id, x, y) => {
+      set(state => ({
+        displays: state.displays.map(d => d.id === id ? { ...d, x, y } : d)
+      }));
+      get().saveToLocal();
+    },
+
+    moveWindowToDisplay: (appId, displayId) => {
+      set(state => ({
+        windows: state.windows.map(w => w.id === appId ? { ...w, displayId } : w)
+      }));
+      get().saveToLocal();
+    },
+
+    registerDisplay: (display) => {
+      set(state => {
+        const exists = state.displays.find(d => d.id === display.id);
+        if (exists) return state;
+        return { displays: [...state.displays, display] };
+      });
+    },
+
+    unregisterDisplay: (id) => {
+      set(state => ({
+        displays: state.displays.filter(d => d.id !== id),
+        windows: state.windows.map(w => w.displayId === id ? { ...w, displayId: state.displays.find(d => d.isPrimary)?.id || 'primary' } : w)
+      }));
+    },
+
     saveToLocal: () => {
       const state = get();
       const settings = {
@@ -231,8 +263,7 @@ export const useOSStore = create<OSStore>((set, get) => {
         pinnedAppIds: state.pinnedAppIds,
         pinnedStartAppIds: state.pinnedStartAppIds,
         volume: state.volume,
-        screens: state.screens,
-        screenOrientation: state.screenOrientation,
+        displays: state.displays,
       };
       localStorage.setItem(STORAGE_KEY, JSON.stringify(settings));
     },
@@ -335,37 +366,6 @@ export const useOSStore = create<OSStore>((set, get) => {
     },
     setCursorColor: (color) => {
       set({ cursorColor: color });
-      get().saveToLocal();
-    },
-
-    setSyncing: (syncing) => set({ isSyncing: syncing }),
-
-    addScreen: () => {
-      const { screens, setSyncing } = get();
-      if (screens.length >= 2) return; // Limit to 2 screens for now as requested
-      
-      setSyncing(true);
-      
-      // Simulate account sync and screen detection
-      setTimeout(() => {
-        const newScreen = { id: `screen-${Date.now()}`, isMain: false };
-        set({ 
-          screens: [...get().screens, newScreen],
-          isSyncing: false 
-        });
-        get().saveToLocal();
-      }, 2000);
-    },
-
-    removeScreen: (id) => {
-      const { screens } = get();
-      const newScreens = screens.filter(s => s.id !== id || s.isMain);
-      set({ screens: newScreens });
-      get().saveToLocal();
-    },
-
-    setScreenOrientation: (orientation) => {
-      set({ screenOrientation: orientation });
       get().saveToLocal();
     },
 
@@ -633,7 +633,7 @@ export const useOSStore = create<OSStore>((set, get) => {
 
       if (existing) {
         return { 
-          windows: state.windows.map(w => w.id === id ? { ...w, isOpen: true, isMinimized: false } : w),
+          windows: state.windows.map(w => w.id === id ? { ...w, isOpen: true, isMinimized: false, displayId: state.currentDisplayId } : w),
           activeWindowId: id,
           processes: newProcesses
         };
@@ -644,7 +644,8 @@ export const useOSStore = create<OSStore>((set, get) => {
         isOpen: true,
         isMinimized: false,
         isMaximized: false,
-        zIndex: state.windows.length + 10
+        zIndex: state.windows.length + 10,
+        displayId: state.currentDisplayId
       };
       return { 
         windows: [...state.windows, newWindow],

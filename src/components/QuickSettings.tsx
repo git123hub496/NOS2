@@ -38,6 +38,7 @@ const QuickSettings: React.FC = () => {
     { id: 'invert', label: 'Invert', icon: <Monitor size={20} />, active: isInverted, action: toggleInvert },
     { id: 'lite', label: 'Lite Mode', icon: <Zap size={20} />, active: isLiteMode, action: () => setLiteMode(!isLiteMode) },
     { id: 'dark', label: 'Light Mode', icon: <Sun size={20} />, active: !isDarkMode, action: () => setDarkMode(!isDarkMode) },
+    { id: 'display', label: 'Add Display', icon: <Monitor size={20} />, active: false, action: () => window.open(window.location.href, '_blank') },
   ];
 
   React.useEffect(() => {

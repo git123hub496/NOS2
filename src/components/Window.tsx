@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion } from 'motion/react';
-import { X, Minus, Square, Maximize2 } from 'lucide-react';
+import { X, Minus, Square, Maximize2, Monitor } from 'lucide-react';
 import { useOSStore, AppId } from '../store';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
@@ -16,14 +16,19 @@ interface WindowProps {
 }
 
 const Window: React.FC<WindowProps> = ({ id, title, children }) => {
-  const { windows, activeWindowId, closeApp, minimizeApp, maximizeApp, focusApp, isLiteMode } = useOSStore();
+  const { 
+    windows, activeWindowId, closeApp, minimizeApp, maximizeApp, focusApp, 
+    isLiteMode, currentDisplayId, displays, moveWindowToDisplay 
+  } = useOSStore();
   const windowState = windows.find(w => w.id === id);
 
-  if (!windowState || !windowState.isOpen || windowState.isMinimized) return null;
+  if (!windowState || !windowState.isOpen || windowState.isMinimized || windowState.displayId !== currentDisplayId) return null;
 
   const isActive = activeWindowId === id;
   const isMobile = typeof window !== 'undefined' && window.innerWidth < 640;
   const isMaximized = windowState.isMaximized || isMobile;
+
+  const otherDisplays = displays.filter(d => d.id !== currentDisplayId);
 
   return (
     <motion.div
@@ -65,6 +70,21 @@ const Window: React.FC<WindowProps> = ({ id, title, children }) => {
         </div>
         
         <div className="flex items-center gap-1">
+          {otherDisplays.length > 0 && (
+            <div className="flex items-center gap-1 mr-2 border-r border-white/10 pr-2">
+              {otherDisplays.map((display, i) => (
+                <button
+                  key={display.id}
+                  onClick={(e) => { e.stopPropagation(); moveWindowToDisplay(id, display.id); }}
+                  className="p-1.5 hover:bg-white/10 rounded-md transition-colors group flex items-center gap-1"
+                  title={`Move to Display ${i + 2}`}
+                >
+                  <Monitor size={12} className="text-gray-400 group-hover:text-white" />
+                  <span className="text-[10px] text-gray-500 group-hover:text-white">{i + 2}</span>
+                </button>
+              ))}
+            </div>
+          )}
           {!isMobile && (
             <>
               <button 
