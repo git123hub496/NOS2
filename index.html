@@ -4,26 +4,11 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Nebulabs OS 2</title>
-    
-    <link rel="manifest" href="manifest.json" />
-    <meta name="theme-color" content="#3b82f6" />
-    <meta name="description" content="A fast web OS for a PC" />
-
-    <link rel="icon" type="image/png" href="favicon.png" />
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%233b82f6'/><text x='50%' y='50%' dominant-baseline='middle' text-anchor='middle' font-family='sans-serif' font-size='60' font-weight='bold' fill='white'>N2</text></svg>" />
   </head>
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
-
-    <script>
-      if ('serviceWorker' in navigator) {
-        window.addEventListener('load', () => {
-          navigator.serviceWorker.register('./sw.js')
-            .then(reg => console.log('Nebulabs OS Service Worker registered!', reg))
-            .catch(err => console.log('Service Worker registration failed:', err));
-        });
-      }
-    </script>
   </body>
 </html>
+
