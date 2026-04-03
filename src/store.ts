@@ -21,16 +21,6 @@ export interface WindowState {
   isMinimized: boolean;
   isMaximized: boolean;
   zIndex: number;
-  displayId: string;
-}
-
-export interface Display {
-  id: string;
-  x: number;
-  y: number;
-  width: number;
-  height: number;
-  isPrimary: boolean;
 }
 
 export interface User {
@@ -99,14 +89,6 @@ interface OSStore {
   selectedNetwork: string;
   networks: Network[];
   savedUsers: User[];
-
-  // Multi-Display
-  displays: Display[];
-  currentDisplayId: string;
-  setDisplayPosition: (id: string, x: number, y: number) => void;
-  moveWindowToDisplay: (appId: AppId, displayId: string) => void;
-  registerDisplay: (display: Display) => void;
-  unregisterDisplay: (id: string) => void;
 
   boot: () => void;
   setAuthReady: (ready: boolean) => void;
@@ -212,38 +194,6 @@ export const useOSStore = create<OSStore>((set, get) => {
     ],
     savedUsers: JSON.parse(localStorage.getItem('nebula_saved_users') || '[]'),
 
-    displays: [],
-    currentDisplayId: Math.random().toString(36).substr(2, 9),
-
-    setDisplayPosition: (id, x, y) => {
-      set(state => ({
-        displays: state.displays.map(d => d.id === id ? { ...d, x, y } : d)
-      }));
-      get().saveToLocal();
-    },
-
-    moveWindowToDisplay: (appId, displayId) => {
-      set(state => ({
-        windows: state.windows.map(w => w.id === appId ? { ...w, displayId } : w)
-      }));
-      get().saveToLocal();
-    },
-
-    registerDisplay: (display) => {
-      set(state => {
-        const exists = state.displays.find(d => d.id === display.id);
-        if (exists) return state;
-        return { displays: [...state.displays, display] };
-      });
-    },
-
-    unregisterDisplay: (id) => {
-      set(state => ({
-        displays: state.displays.filter(d => d.id !== id),
-        windows: state.windows.map(w => w.displayId === id ? { ...w, displayId: state.displays.find(d => d.isPrimary)?.id || 'primary' } : w)
-      }));
-    },
-
     saveToLocal: () => {
       const state = get();
       const settings = {
@@ -263,7 +213,6 @@ export const useOSStore = create<OSStore>((set, get) => {
         pinnedAppIds: state.pinnedAppIds,
         pinnedStartAppIds: state.pinnedStartAppIds,
         volume: state.volume,
-        displays: state.displays,
       };
       localStorage.setItem(STORAGE_KEY, JSON.stringify(settings));
     },
@@ -633,7 +582,7 @@ export const useOSStore = create<OSStore>((set, get) => {
 
       if (existing) {
         return { 
-          windows: state.windows.map(w => w.id === id ? { ...w, isOpen: true, isMinimized: false, displayId: state.currentDisplayId } : w),
+          windows: state.windows.map(w => w.id === id ? { ...w, isOpen: true, isMinimized: false } : w),
           activeWindowId: id,
           processes: newProcesses
         };
@@ -644,8 +593,7 @@ export const useOSStore = create<OSStore>((set, get) => {
         isOpen: true,
         isMinimized: false,
         isMaximized: false,
-        zIndex: state.windows.length + 10,
-        displayId: state.currentDisplayId
+        zIndex: state.windows.length + 10
       };
       return { 
         windows: [...state.windows, newWindow],

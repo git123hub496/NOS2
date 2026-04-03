@@ -67,21 +67,8 @@ const Desktop: React.FC = () => {
   const { 
     wallpaper, openApp, closeApp, isLiteMode, user,
     isWidgetsOpen, isChatOpen, toggleWidgets, toggleChat,
-    accentColor, setSearchQuery, activeWindowId, currentDisplayId, displays
+    accentColor, setSearchQuery, activeWindowId
   } = useOSStore();
-
-  const currentDisplay = displays.find(d => d.id === currentDisplayId);
-  const isPrimary = currentDisplay?.isPrimary ?? true;
-  const [isIdentifying, setIsIdentifying] = useState(false);
-
-  useEffect(() => {
-    const handleIdentify = () => {
-      setIsIdentifying(true);
-      setTimeout(() => setIsIdentifying(false), 3000);
-    };
-    window.addEventListener('nebula_identify', handleIdentify);
-    return () => window.removeEventListener('nebula_identify', handleIdentify);
-  }, []);
 
   const [contextMenu, setContextMenu] = useState<{ x: number, y: number } | null>(null);
   const [focusedIconId, setFocusedIconId] = useState<string | null>(null);
@@ -175,29 +162,6 @@ const Desktop: React.FC = () => {
         style={{ backgroundColor: 'var(--os-accent)' }}
       />
 
-      {/* Secondary Display Indicator */}
-      {!isPrimary && (
-        <div className="absolute top-4 left-1/2 -translate-x-1/2 px-4 py-1 rounded-full bg-white/10 border border-white/10 text-[10px] font-bold uppercase tracking-[0.2em] text-white/40 pointer-events-none z-[50]">
-          Secondary Display
-        </div>
-      )}
-
-      {/* Identification Overlay */}
-      <AnimatePresence>
-        {isIdentifying && (
-          <motion.div
-            initial={{ opacity: 0, scale: 0.5 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.5 }}
-            className="fixed inset-0 flex items-center justify-center z-[10000] pointer-events-none"
-          >
-            <div className="w-64 h-64 rounded-full bg-blue-500/80 backdrop-blur-md flex items-center justify-center text-8xl font-black text-white shadow-2xl border-4 border-white/20">
-              {displays.findIndex(d => d.id === currentDisplayId) + 1}
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
       {/* Context Menu */}
       <AnimatePresence>
         {contextMenu && (
@@ -239,33 +203,31 @@ const Desktop: React.FC = () => {
         )}
       </AnimatePresence>
       {/* Desktop Icons */}
-      {isPrimary && (
-        <div className="p-4 grid grid-flow-col grid-rows-[repeat(auto-fill,80px)] sm:grid-rows-[repeat(auto-fill,100px)] gap-2 w-fit">
-          {desktopIcons.map((icon) => (
-            <button
-              key={icon.id}
-              onDoubleClick={() => openApp(icon.id as any, icon.name)}
-              onClick={() => {
-                if (typeof window !== 'undefined' && window.innerWidth < 640) {
-                  openApp(icon.id as any, icon.name);
-                }
-              }}
-              className={`w-20 h-20 sm:w-24 sm:h-24 flex flex-col items-center justify-center gap-1 sm:gap-2 rounded-lg transition-colors group ${focusedIconId === icon.id ? 'bg-white/20 ring-2 ring-white/20' : 'hover:bg-white/10'}`}
-              onMouseEnter={() => setFocusedIconId(icon.id)}
+      <div className="p-4 grid grid-flow-col grid-rows-[repeat(auto-fill,80px)] sm:grid-rows-[repeat(auto-fill,100px)] gap-2 w-fit">
+        {desktopIcons.map((icon) => (
+          <button
+            key={icon.id}
+            onDoubleClick={() => openApp(icon.id as any, icon.name)}
+            onClick={() => {
+              if (typeof window !== 'undefined' && window.innerWidth < 640) {
+                openApp(icon.id as any, icon.name);
+              }
+            }}
+            className={`w-20 h-20 sm:w-24 sm:h-24 flex flex-col items-center justify-center gap-1 sm:gap-2 rounded-lg transition-colors group ${focusedIconId === icon.id ? 'bg-white/20 ring-2 ring-white/20' : 'hover:bg-white/10'}`}
+            onMouseEnter={() => setFocusedIconId(icon.id)}
+          >
+            <div 
+              className="group-hover:scale-110 transition-transform drop-shadow-lg scale-75 sm:scale-100"
+              style={{ color: icon.color }}
             >
-              <div 
-                className="group-hover:scale-110 transition-transform drop-shadow-lg scale-75 sm:scale-100"
-                style={{ color: icon.color }}
-              >
-                {icon.icon}
-              </div>
-              <span className="text-[10px] sm:text-[11px] text-white font-medium text-center drop-shadow-md px-1 truncate w-full">
-                {icon.name}
-              </span>
-            </button>
-          ))}
-        </div>
-      )}
+              {icon.icon}
+            </div>
+            <span className="text-[10px] sm:text-[11px] text-white font-medium text-center drop-shadow-md px-1 truncate w-full">
+              {icon.name}
+            </span>
+          </button>
+        ))}
+      </div>
 
       {/* Windows */}
       <Window id="settings" title="System Settings">

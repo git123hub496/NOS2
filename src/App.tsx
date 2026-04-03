@@ -20,59 +20,8 @@ export default function App() {
     isShutDown, isSetupComplete, loginLocal, accentColor, fontStyle,
     savedUsers, removeSavedUser, cursorScale, setCursorScale, cursorColor,
     taskbarTransparency, windowTransparency, isDarkMode, factoryReset,
-    openApp, currentDisplayId, registerDisplay, unregisterDisplay, displays, windows
+    openApp
   } = useOSStore();
-
-  useEffect(() => {
-    const channel = new BroadcastChannel('nebula_os_sync');
-    
-    // Register this tab as a display
-    const display = {
-      id: currentDisplayId,
-      x: displays.length * 1920, // Default position
-      y: 0,
-      width: window.innerWidth,
-      height: window.innerHeight,
-      isPrimary: displays.length === 0
-    };
-    registerDisplay(display);
-
-    const handleMessage = (event: MessageEvent) => {
-      if (event.data.type === 'SYNC_STATE') {
-        const newState = event.data.state;
-        // Merge state but keep local currentDisplayId
-        useOSStore.setState({
-          ...newState,
-          currentDisplayId: currentDisplayId,
-          // Merge displays to ensure we don't lose local display info
-          displays: Array.from(new Map([...newState.displays, ...useOSStore.getState().displays].map(d => [d.id, d])).values())
-        });
-      } else if (event.data.type === 'IDENTIFY') {
-        window.dispatchEvent(new CustomEvent('nebula_identify'));
-      }
-    };
-
-    channel.onmessage = handleMessage;
-
-    const syncInterval = setInterval(() => {
-      channel.postMessage({ type: 'SYNC_STATE', state: useOSStore.getState() });
-    }, 500);
-
-    const handleUnload = () => {
-      unregisterDisplay(currentDisplayId);
-      channel.postMessage({ type: 'SYNC_STATE', state: useOSStore.getState() });
-      channel.close();
-    };
-
-    window.addEventListener('beforeunload', handleUnload);
-
-    return () => {
-      clearInterval(syncInterval);
-      window.removeEventListener('beforeunload', handleUnload);
-      channel.close();
-    };
-  }, [currentDisplayId]);
-
   const [isLoggingIn, setIsLoggingIn] = useState(false);
   const [showLocalLogin, setShowLocalLogin] = useState(false);
   const [localUsername, setLocalUsername] = useState('');
