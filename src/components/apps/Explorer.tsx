@@ -29,17 +29,24 @@ const Explorer: React.FC = () => {
 
     // Skip Firestore for local/guest users to avoid permission errors
     if (user.isLocal) {
-      setFiles([
-        {
-          id: 'welcome',
-          name: 'Welcome to Nebulabs.txt',
-          type: 'file',
-          size: '1 KB',
-          date: new Date().toISOString().split('T')[0],
-          ownerId: user.uid,
-          content: 'Welcome to Nebulabs OS 2! You are currently logged in as a Guest. To sync your files across devices, please sign in with a Nebula Account.'
-        }
-      ]);
+      const savedFiles = JSON.parse(localStorage.getItem(`nebula_files_${user.uid}`) || 'null');
+      if (savedFiles) {
+        setFiles(savedFiles);
+      } else {
+        const initialFiles: FileItem[] = [
+          {
+            id: 'welcome',
+            name: 'Welcome to Nebulabs.txt',
+            type: 'file',
+            size: '1 KB',
+            date: new Date().toISOString().split('T')[0],
+            ownerId: user.uid,
+            content: 'Welcome to Nebulabs OS 2! You are currently logged in as a Guest. To sync your files across devices, please sign in with a Nebula Account.'
+          }
+        ];
+        setFiles(initialFiles);
+        localStorage.setItem(`nebula_files_${user.uid}`, JSON.stringify(initialFiles));
+      }
       setIsLoading(false);
       return;
     }
@@ -75,7 +82,9 @@ const Explorer: React.FC = () => {
         content: type === 'file' ? 'This is a new text file created in Nebulabs OS.' : '',
         date: new Date().toISOString().split('T')[0]
       };
-      setFiles(prev => [...prev, newFile]);
+      const newFiles = [...files, newFile];
+      setFiles(newFiles);
+      localStorage.setItem(`nebula_files_${user.uid}`, JSON.stringify(newFiles));
       return;
     }
 
@@ -100,7 +109,9 @@ const Explorer: React.FC = () => {
     if (!user) return;
 
     if (user.isLocal) {
-      setFiles(prev => prev.filter(f => f.id !== id));
+      const newFiles = files.filter(f => f.id !== id);
+      setFiles(newFiles);
+      localStorage.setItem(`nebula_files_${user.uid}`, JSON.stringify(newFiles));
       if (selectedFile?.id === id) setSelectedFile(null);
       return;
     }
@@ -144,7 +155,9 @@ const Explorer: React.FC = () => {
           content: content,
           date: new Date().toISOString().split('T')[0]
         };
-        setFiles(prev => [...prev, newFile]);
+        const newFiles = [...files, newFile];
+        setFiles(newFiles);
+        localStorage.setItem(`nebula_files_${user.uid}`, JSON.stringify(newFiles));
         return;
       }
 

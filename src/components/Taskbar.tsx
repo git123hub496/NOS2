@@ -88,6 +88,7 @@ const Taskbar: React.FC = () => {
     { id: 'sticky-notes', name: 'Sticky Notes', icon: <StickyNote size={20} />, color: 'var(--os-accent)' },
     { id: 'fonts', name: 'Fonts', icon: <Type size={20} />, color: 'var(--os-accent)' },
     { id: 'car', name: 'Nebula Drive', icon: <Car size={20} />, color: 'var(--os-accent)' },
+    { id: 'quadrais-ai', name: 'Quadrais AI', icon: <Sparkles size={20} />, color: 'var(--os-accent)' },
   ];
 
   const pinnedApps = allApps.filter(app => pinnedAppIds.includes(app.id));

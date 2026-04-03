@@ -12,6 +12,7 @@ import NebulaDocs from './apps/NebulaDocs';
 import NebulaSlides from './apps/NebulaSlides';
 import ProcessManager from './apps/ProcessManager';
 import NebulaBrowser from './apps/NebulaBrowser';
+import QuadraisAI from './apps/QuadraisAI';
 import { 
   FileText, 
   Globe, 
@@ -211,6 +212,9 @@ const Desktop: React.FC = () => {
       <Window id="browser" title="Nebula Browser">
         <NebulaBrowser />
       </Window>
+      <Window id="quadrais-ai" title="Quadrais AI">
+        <QuadraisAI />
+      </Window>
       <Window id="search" title="Nebula Search">
         <div className="h-full flex flex-col bg-[#0a0a0a] p-8 items-center justify-center">
           <div className="mb-8 text-center">
@@ -262,7 +266,28 @@ const Desktop: React.FC = () => {
             </div>
           </div>
           <div className="flex-1 p-6 overflow-auto grid grid-cols-2 gap-4">
-            {[1,2,3,4,5,6].map(i => (
+            <div className="bg-white/5 border border-white/10 rounded-2xl p-4 flex gap-4 hover:bg-white/10 transition-all cursor-pointer group">
+              <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-purple-500 to-indigo-600 flex items-center justify-center shadow-lg group-hover:scale-105 transition-transform">
+                <Sparkles size={32} className="text-white" />
+              </div>
+              <div className="flex-1">
+                <h3 className="text-sm font-bold text-white">Quadrais AI</h3>
+                <p className="text-[10px] text-gray-500 mt-1">AI Assistant • 5.0 ★</p>
+                <button 
+                  onClick={() => {
+                    openApp('quadrais-ai', 'Quadrais AI');
+                    const { pinnedStartAppIds, togglePinStartApp } = useOSStore.getState();
+                    if (!pinnedStartAppIds.includes('quadrais-ai')) {
+                      togglePinStartApp('quadrais-ai');
+                    }
+                  }}
+                  className="mt-2 px-4 py-1 bg-white/10 rounded-full text-[10px] font-bold text-blue-400 hover:bg-blue-500 hover:text-white transition-all"
+                >
+                  GET
+                </button>
+              </div>
+            </div>
+            {[1,2,3,4,5].map(i => (
               <div key={i} className="bg-white/5 border border-white/10 rounded-2xl p-4 flex gap-4 hover:bg-white/10 transition-all cursor-pointer group">
                 <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center shadow-lg group-hover:scale-105 transition-transform">
                   <Sparkles size={32} className="text-white" />
