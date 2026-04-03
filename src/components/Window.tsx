@@ -22,6 +22,8 @@ const Window: React.FC<WindowProps> = ({ id, title, children }) => {
   if (!windowState || !windowState.isOpen || windowState.isMinimized) return null;
 
   const isActive = activeWindowId === id;
+  const isMobile = typeof window !== 'undefined' && window.innerWidth < 640;
+  const isMaximized = windowState.isMaximized || isMobile;
 
   return (
     <motion.div
@@ -30,12 +32,12 @@ const Window: React.FC<WindowProps> = ({ id, title, children }) => {
         opacity: 1, 
         scale: 1, 
         y: 0,
-        width: windowState.isMaximized ? '100%' : '800px',
-        height: windowState.isMaximized ? 'calc(100% - 48px)' : '500px',
-        top: windowState.isMaximized ? 0 : '15%',
-        left: windowState.isMaximized ? 0 : '20%',
+        width: isMaximized ? '100%' : '800px',
+        height: isMaximized ? 'calc(100% - 48px)' : '500px',
+        top: isMaximized ? 0 : '15%',
+        left: isMaximized ? 0 : '20%',
       }}
-      drag={!windowState.isMaximized}
+      drag={!isMaximized}
       dragMomentum={false}
       onMouseDown={() => focusApp(id)}
       style={{ 
@@ -45,34 +47,40 @@ const Window: React.FC<WindowProps> = ({ id, title, children }) => {
       className={cn(
         "fixed overflow-hidden flex flex-col window-shadow",
         isLiteMode ? "bg-[#1a1a1a] border border-[#333]" : "glass-dark rounded-xl border border-white/10",
-        isActive ? "ring-1" : ""
+        isActive ? "ring-1" : "",
+        isMobile && "rounded-none border-none"
       )}
     >
       {/* Title Bar */}
       <div 
         className={cn(
           "h-10 flex items-center justify-between px-4 select-none cursor-default",
-          isActive ? "bg-white/5" : "bg-transparent"
+          isActive ? "bg-white/5" : "bg-transparent",
+          isMobile && "h-12"
         )}
-        onDoubleClick={() => maximizeApp(id)}
+        onDoubleClick={() => !isMobile && maximizeApp(id)}
       >
         <div className="flex items-center gap-2">
           <span className="text-xs font-medium text-gray-300">{title}</span>
         </div>
         
         <div className="flex items-center gap-1">
-          <button 
-            onClick={(e) => { e.stopPropagation(); minimizeApp(id); }}
-            className="p-1.5 hover:bg-white/10 rounded-md transition-colors"
-          >
-            <Minus size={14} className="text-gray-400" />
-          </button>
-          <button 
-            onClick={(e) => { e.stopPropagation(); maximizeApp(id); }}
-            className="p-1.5 hover:bg-white/10 rounded-md transition-colors"
-          >
-            {windowState.isMaximized ? <Square size={12} className="text-gray-400" /> : <Maximize2 size={12} className="text-gray-400" />}
-          </button>
+          {!isMobile && (
+            <>
+              <button 
+                onClick={(e) => { e.stopPropagation(); minimizeApp(id); }}
+                className="p-1.5 hover:bg-white/10 rounded-md transition-colors"
+              >
+                <Minus size={14} className="text-gray-400" />
+              </button>
+              <button 
+                onClick={(e) => { e.stopPropagation(); maximizeApp(id); }}
+                className="p-1.5 hover:bg-white/10 rounded-md transition-colors"
+              >
+                {windowState.isMaximized ? <Square size={12} className="text-gray-400" /> : <Maximize2 size={12} className="text-gray-400" />}
+              </button>
+            </>
+          )}
           <button 
             onClick={(e) => { e.stopPropagation(); closeApp(id); }}
             className="p-1.5 hover:bg-red-500/80 rounded-md transition-colors group"

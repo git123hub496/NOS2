@@ -47,6 +47,7 @@ const StartMenu: React.FC<{ isOpen: boolean; onClose: () => void }> = ({ isOpen,
   const [search, setSearch] = useState("");
   const [isPowerMenuOpen, setIsPowerMenuOpen] = useState(false);
   const [view, setView] = useState<'pinned' | 'all'>('pinned');
+  const [focusedAppId, setFocusedAppId] = useState<AppId | null>(null);
   const [contextMenu, setContextMenu] = useState<{ x: number, y: number, appId: AppId } | null>(null);
 
   const handleSignOut = async () => {
@@ -90,12 +91,53 @@ const StartMenu: React.FC<{ isOpen: boolean; onClose: () => void }> = ({ isOpen,
     { id: 'fonts', name: 'Fonts', icon: <Type size={20} />, color: 'var(--os-accent)' },
     { id: 'car', name: 'Nebula Drive', icon: <Car size={20} />, color: 'var(--os-accent)' },
     { id: 'terminal', name: 'Terminal', icon: <TerminalIcon size={20} />, color: 'var(--os-accent)' },
+    { id: 'quadrais-ai', name: 'Quadrais AI', icon: <Sparkles size={20} />, color: 'var(--os-accent)' },
   ];
 
   const pinnedApps = allApps.filter(app => pinnedStartAppIds.includes(app.id));
   const filteredApps = (view === 'pinned' ? pinnedApps : allApps).filter(app => 
     app.name.toLowerCase().includes(search.toLowerCase())
   );
+
+  React.useEffect(() => {
+    if (!isOpen) return;
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (search.length > 0 && e.key !== 'Enter' && e.key !== 'Escape') return; // Allow typing in search
+
+      const currentIndex = filteredApps.findIndex(app => app.id === focusedAppId);
+
+      if (e.key === 'ArrowRight') {
+        e.preventDefault();
+        const nextIndex = (currentIndex + 1) % filteredApps.length;
+        setFocusedAppId(filteredApps[nextIndex].id);
+      } else if (e.key === 'ArrowLeft') {
+        e.preventDefault();
+        const prevIndex = (currentIndex - 1 + filteredApps.length) % filteredApps.length;
+        setFocusedAppId(filteredApps[prevIndex].id);
+      } else if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        const nextIndex = (currentIndex + 4) % filteredApps.length; // 4 columns
+        setFocusedAppId(filteredApps[nextIndex].id);
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        const prevIndex = (currentIndex - 4 + filteredApps.length) % filteredApps.length;
+        setFocusedAppId(filteredApps[prevIndex].id);
+      } else if (e.key === 'Enter' && focusedAppId) {
+        e.preventDefault();
+        const app = filteredApps.find(a => a.id === focusedAppId);
+        if (app) {
+          openApp(app.id, app.name);
+          onClose();
+        }
+      } else if (e.key === 'Escape') {
+        onClose();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, focusedAppId, filteredApps, openApp, onClose, search]);
 
   const handleContextMenu = (e: React.MouseEvent, appId: AppId) => {
     e.preventDefault();
@@ -116,7 +158,7 @@ const StartMenu: React.FC<{ isOpen: boolean; onClose: () => void }> = ({ isOpen,
       initial={{ opacity: 0, y: 20, scale: 0.95 }}
       animate={{ opacity: 1, y: 0, scale: 1 }}
       exit={{ opacity: 0, y: 20, scale: 0.95 }}
-      className={`fixed bottom-14 left-2 w-[400px] h-[550px] z-[1000] flex flex-col overflow-hidden window-shadow ${isLiteMode ? 'bg-[#1a1a1a] border border-[#333]' : 'glass-dark rounded-2xl border border-white/10'}`}
+      className={`fixed bottom-14 left-2 sm:w-[400px] sm:h-[550px] w-[calc(100%-16px)] h-[calc(100%-70px)] z-[1000] flex flex-col overflow-hidden window-shadow ${isLiteMode ? 'bg-[#1a1a1a] border border-[#333]' : 'glass-dark rounded-2xl border border-white/10'}`}
       onClick={() => setContextMenu(null)}
     >
       {/* Context Menu */}
@@ -190,7 +232,8 @@ const StartMenu: React.FC<{ isOpen: boolean; onClose: () => void }> = ({ isOpen,
               key={app.id}
               onClick={() => { openApp(app.id, app.name); onClose(); }}
               onContextMenu={(e) => handleContextMenu(e, app.id)}
-              className="flex flex-col items-center gap-2 p-3 rounded-xl hover:bg-white/5 transition-colors group"
+              onMouseEnter={() => setFocusedAppId(app.id)}
+              className={`flex flex-col items-center gap-2 p-3 rounded-xl transition-colors group ${focusedAppId === app.id ? 'bg-white/10 ring-1 ring-white/20' : 'hover:bg-white/5'}`}
             >
               <div 
                 className="w-10 h-10 rounded-lg bg-white/5 flex items-center justify-center group-hover:scale-110 transition-transform"

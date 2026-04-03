@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Folder, File, ChevronRight, Search, HardDrive, Download, Upload, Clock, Star, Plus, Trash2, Monitor } from 'lucide-react';
+import { Folder, File, ChevronRight, Search, HardDrive, Download, Upload, Clock, Star, Plus, Trash2, Monitor, X, FileText, Image as ImageIcon, FileCode } from 'lucide-react';
 import { db, handleFirestoreError, OperationType } from '../../firebase';
 import { collection, onSnapshot, addDoc, deleteDoc, doc, Timestamp, query, orderBy } from 'firebase/firestore';
 import { useOSStore } from '../../store';
+import ReactMarkdown from 'react-markdown';
 
 interface FileItem {
   id: string;
@@ -14,18 +15,53 @@ interface FileItem {
   content?: string;
 }
 
+interface Tab {
+  id: string;
+  path: string;
+  selectedFileId: string | null;
+}
+
 const Explorer: React.FC = () => {
   const { user } = useOSStore();
-  const [currentPath, setCurrentPath] = useState("C:\\Users\\Nebulabs\\Documents");
+  const [tabs, setTabs] = useState<Tab[]>([
+    { id: '1', path: "C:\\Users\\Nebulabs\\Documents", selectedFileId: null }
+  ]);
+  const [activeTabId, setActiveTabId] = useState('1');
+  const activeTab = tabs.find(t => t.id === activeTabId) || tabs[0];
+
   const [files, setFiles] = useState<FileItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [selectedFile, setSelectedFile] = useState<FileItem | null>(null);
   const [showPreview, setShowPreview] = useState(true);
   const [isDragging, setIsDragging] = useState(false);
+  const [editingFileId, setEditingFileId] = useState<string | null>(null);
+  const [editingName, setEditingName] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
-  
+
+  const selectedFile = files.find(f => f.id === activeTab.selectedFileId) || null;
+
+  const updateActiveTab = (updates: Partial<Tab>) => {
+    setTabs(prev => prev.map(t => t.id === activeTabId ? { ...t, ...updates } : t));
+  };
+
+  const addTab = () => {
+    const newId = Math.random().toString(36).substr(2, 9);
+    setTabs(prev => [...prev, { id: newId, path: "C:\\Users\\Nebulabs\\Documents", selectedFileId: null }]);
+    setActiveTabId(newId);
+  };
+
+  const closeTab = (e: React.MouseEvent, id: string) => {
+    e.stopPropagation();
+    if (tabs.length === 1) return;
+    const newTabs = tabs.filter(t => t.id !== id);
+    setTabs(newTabs);
+    if (activeTabId === id) {
+      setActiveTabId(newTabs[newTabs.length - 1].id);
+    }
+  };
+
   useEffect(() => {
     if (!user) return;
+    setIsLoading(true);
 
     // Skip Firestore for local/guest users to avoid permission errors
     if (user.isLocal) {
@@ -42,6 +78,24 @@ const Explorer: React.FC = () => {
             date: new Date().toISOString().split('T')[0],
             ownerId: user.uid,
             content: 'Welcome to Nebulabs OS 2! You are currently logged in as a Guest. To sync your files across devices, please sign in with a Nebula Account.'
+          },
+          {
+            id: 'readme',
+            name: 'README.md',
+            type: 'file',
+            size: '1 KB',
+            date: new Date().toISOString().split('T')[0],
+            ownerId: user.uid,
+            content: '# Nebula OS 2\n\nWelcome to the next generation of computing.\n\n### Features\n- **Fast & Fluid**: Built with React and Framer Motion.\n- **Customizable**: Change your accent color, wallpaper, and more.\n- **PWA Support**: Install Nebula OS on your device.\n\n*Enjoy your stay!*'
+          },
+          {
+            id: 'sample-image',
+            name: 'Nebula.jpg',
+            type: 'file',
+            size: '120 KB',
+            date: new Date().toISOString().split('T')[0],
+            ownerId: user.uid,
+            content: 'https://images.unsplash.com/photo-1451187580459-43490279c0fa?q=80&w=400&auto=format&fit=crop'
           }
         ];
         setFiles(initialFiles);
@@ -112,18 +166,87 @@ const Explorer: React.FC = () => {
       const newFiles = files.filter(f => f.id !== id);
       setFiles(newFiles);
       localStorage.setItem(`nebula_files_${user.uid}`, JSON.stringify(newFiles));
-      if (selectedFile?.id === id) setSelectedFile(null);
+      if (activeTab.selectedFileId === id) updateActiveTab({ selectedFileId: null });
       return;
     }
 
     const path = `users/${user.uid}/files/${id}`;
     try {
       await deleteDoc(doc(db, `users/${user.uid}/files`, id));
-      if (selectedFile?.id === id) setSelectedFile(null);
+      if (activeTab.selectedFileId === id) updateActiveTab({ selectedFileId: null });
     } catch (error) {
       handleFirestoreError(error, OperationType.DELETE, path);
     }
   };
+
+  const renameFile = async (id: string, newName: string) => {
+    if (!user || !newName.trim()) {
+      setEditingFileId(null);
+      return;
+    }
+
+    if (user.isLocal) {
+      const newFiles = files.map(f => f.id === id ? { ...f, name: newName } : f);
+      setFiles(newFiles);
+      localStorage.setItem(`nebula_files_${user.uid}`, JSON.stringify(newFiles));
+      setEditingFileId(null);
+      return;
+    }
+
+    const path = `users/${user.uid}/files/${id}`;
+    try {
+      const { updateDoc, doc } = await import('firebase/firestore');
+      await updateDoc(doc(db, `users/${user.uid}/files`, id), {
+        name: newName,
+        updatedAt: Timestamp.now()
+      });
+      setEditingFileId(null);
+    } catch (error) {
+      handleFirestoreError(error, OperationType.UPDATE, path);
+    }
+  };
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (editingFileId) return; // Don't navigate while renaming
+
+      const currentIndex = files.findIndex(f => f.id === activeTab.selectedFileId);
+
+      if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        const nextIndex = (currentIndex + 1) % files.length;
+        updateActiveTab({ selectedFileId: files[nextIndex].id });
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        const prevIndex = (currentIndex - 1 + files.length) % files.length;
+        updateActiveTab({ selectedFileId: files[prevIndex].id });
+      } else if (e.key === 'Enter' && activeTab.selectedFileId) {
+        e.preventDefault();
+        const file = files.find(f => f.id === activeTab.selectedFileId);
+        if (file?.type === 'folder') {
+          updateActiveTab({ path: `${activeTab.path}\\${file.name}`, selectedFileId: null });
+        }
+      } else if (e.key === 'Backspace' && activeTab.path !== 'C:\\Users\\Guest') {
+        e.preventDefault();
+        const parts = activeTab.path.split('\\');
+        parts.pop();
+        updateActiveTab({ path: parts.join('\\'), selectedFileId: null });
+      } else if (e.key === 'Delete' && activeTab.selectedFileId) {
+        e.preventDefault();
+        deleteFile(activeTab.selectedFileId);
+      } else if (e.key === 'F2' && activeTab.selectedFileId) {
+        e.preventDefault();
+        const file = files.find(f => f.id === activeTab.selectedFileId);
+        if (file) {
+          setEditingFileId(file.id);
+          setEditingName(file.name);
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [activeTab, files, editingFileId, updateActiveTab, deleteFile]);
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -218,33 +341,65 @@ const Explorer: React.FC = () => {
       </div>
     );
 
-    const isImage = /\.(jpg|jpeg|png|gif|webp)$/i.test(selectedFile.name);
+    const isImage = /\.(jpg|jpeg|png|gif|webp|svg)$/i.test(selectedFile.name);
+    const isMarkdown = /\.md$/i.test(selectedFile.name);
+    const isText = /\.txt$/i.test(selectedFile.name) || (!isImage && !isMarkdown);
     
     return (
-      <div className="h-full flex flex-col p-4 overflow-auto">
+      <div className="h-full flex flex-col p-4 overflow-hidden">
         <div className="flex items-center gap-3 mb-6">
-            <div className="w-10 h-10 rounded bg-white/5 flex items-center justify-center">
-            {isImage ? <Star size={20} className="text-purple-400" /> : <File size={20} style={{ color: 'var(--os-accent)' }} />}
+          <div className="w-10 h-10 rounded bg-white/5 flex items-center justify-center">
+            {isImage ? <ImageIcon size={20} className="text-purple-400" /> : 
+             isMarkdown ? <FileCode size={20} className="text-blue-400" /> :
+             <FileText size={20} style={{ color: 'var(--os-accent)' }} />}
           </div>
-          <div>
-            <h3 className="text-sm font-bold text-white truncate w-40" title={selectedFile.name}>{selectedFile.name}</h3>
+          <div className="flex-1 min-w-0">
+            {editingFileId === selectedFile.id ? (
+              <input 
+                autoFocus
+                className="bg-white/10 border border-blue-500 rounded px-2 py-0.5 text-sm text-white w-full outline-none"
+                value={editingName}
+                onChange={(e) => setEditingName(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') renameFile(selectedFile.id, editingName);
+                  if (e.key === 'Escape') setEditingFileId(null);
+                }}
+                onBlur={() => renameFile(selectedFile.id, editingName)}
+              />
+            ) : (
+              <h3 
+                className="text-sm font-bold text-white truncate cursor-pointer hover:text-blue-400" 
+                title={selectedFile.name}
+                onDoubleClick={() => {
+                  setEditingFileId(selectedFile.id);
+                  setEditingName(selectedFile.name);
+                }}
+              >
+                {selectedFile.name}
+              </h3>
+            )}
             <p className="text-[10px] text-gray-500 uppercase tracking-widest">{selectedFile.size} • {selectedFile.date}</p>
           </div>
         </div>
 
         <div className="flex-1 bg-white/5 rounded-lg border border-white/10 overflow-hidden flex flex-col">
-          <div className="px-3 py-2 border-b border-white/10 bg-white/5 text-[10px] uppercase tracking-widest text-gray-500 font-bold">
-            Content Preview
+          <div className="px-3 py-2 border-b border-white/10 bg-white/5 text-[10px] uppercase tracking-widest text-gray-500 font-bold flex justify-between items-center">
+            <span>Content Preview</span>
+            <span className="opacity-50">{isImage ? 'Image' : isMarkdown ? 'Markdown' : 'Text'}</span>
           </div>
-          <div className="flex-1 p-4 overflow-auto">
+          <div className="flex-1 p-4 overflow-auto custom-scrollbar">
             {isImage ? (
               <div className="h-full flex items-center justify-center">
                 <img 
                   src={selectedFile.content || 'https://picsum.photos/seed/file/400/300'} 
                   alt={selectedFile.name}
-                  className="max-w-full max-h-full object-contain rounded"
+                  className="max-w-full max-h-full object-contain rounded shadow-2xl"
                   referrerPolicy="no-referrer"
                 />
+              </div>
+            ) : isMarkdown ? (
+              <div className="text-[11px] text-gray-300 prose prose-invert prose-sm max-w-none">
+                <ReactMarkdown>{selectedFile.content || 'No content available.'}</ReactMarkdown>
               </div>
             ) : (
               <pre className="text-[11px] text-gray-400 font-mono whitespace-pre-wrap leading-relaxed">
@@ -259,6 +414,39 @@ const Explorer: React.FC = () => {
 
   return (
     <div className="h-full flex flex-col bg-[#0a0a0a] text-white font-sans">
+      {/* Tab Bar */}
+      <div className="flex items-center bg-black/40 px-2 pt-2 gap-1 overflow-x-auto no-scrollbar border-b border-white/5">
+        {tabs.map(tab => (
+          <div
+            key={tab.id}
+            onClick={() => setActiveTabId(tab.id)}
+            className={`group flex items-center gap-2 px-3 py-1.5 rounded-t-lg text-[10px] uppercase tracking-widest font-bold transition-all cursor-pointer min-w-[120px] max-w-[200px] border-x border-t ${
+              activeTabId === tab.id 
+                ? 'bg-[#0a0a0a] text-white border-white/10' 
+                : 'bg-transparent text-gray-500 border-transparent hover:bg-white/5'
+            }`}
+          >
+            <Folder size={12} className={activeTabId === tab.id ? 'text-yellow-500' : 'text-gray-600'} />
+            <span className="truncate flex-1">{tab.path.split('\\').pop()}</span>
+            {tabs.length > 1 && (
+              <button
+                onClick={(e) => closeTab(e, tab.id)}
+                className="opacity-0 group-hover:opacity-100 p-0.5 hover:bg-white/10 rounded transition-all"
+              >
+                <X size={10} />
+              </button>
+            )}
+          </div>
+        ))}
+        <button
+          onClick={addTab}
+          className="p-1.5 mb-1 hover:bg-white/10 rounded-full text-gray-500 transition-all"
+          title="New Tab"
+        >
+          <Plus size={14} />
+        </button>
+      </div>
+
       {/* Toolbar */}
       <div className="h-12 border-b border-white/5 flex items-center px-4 gap-4">
         <div className="flex items-center gap-2 text-gray-400">
@@ -277,9 +465,16 @@ const Explorer: React.FC = () => {
         </div>
         <div className="flex-1 bg-white/5 border border-white/10 rounded px-3 py-1 text-xs text-gray-400 flex items-center gap-2">
           <HardDrive size={14} />
-          <span>{currentPath}</span>
+          <span>{activeTab.path}</span>
         </div>
         <div className="flex items-center gap-2">
+          <button 
+            onClick={addTab}
+            className="p-1.5 rounded hover:bg-white/10 text-gray-400 transition-colors"
+            title="New Tab"
+          >
+            <Plus size={16} />
+          </button>
           <button 
             onClick={() => setShowPreview(!showPreview)}
             className="p-1.5 rounded transition-colors"
@@ -305,23 +500,39 @@ const Explorer: React.FC = () => {
       <div className="flex-1 flex overflow-hidden">
         {/* Sidebar */}
         <div className="w-48 border-r border-white/5 p-2 space-y-1 overflow-auto">
-          <button className="w-full flex items-center gap-2 px-3 py-1.5 rounded-lg hover:bg-white/5 text-xs text-gray-300">
+          <button 
+            onClick={() => updateActiveTab({ path: "C:\\Users\\Nebulabs\\Quick Access" })}
+            className="w-full flex items-center gap-2 px-3 py-1.5 rounded-lg hover:bg-white/5 text-xs text-gray-300"
+          >
             <Star size={14} className="text-yellow-500" /> Quick Access
           </button>
-          <button className="w-full flex items-center gap-2 px-3 py-1.5 rounded-lg hover:bg-white/5 text-xs text-gray-300">
+          <button 
+            onClick={() => updateActiveTab({ path: "C:\\Users\\Nebulabs\\Recent" })}
+            className="w-full flex items-center gap-2 px-3 py-1.5 rounded-lg hover:bg-white/5 text-xs text-gray-300"
+          >
             <Clock size={14} style={{ color: 'var(--os-accent)' }} /> Recent
           </button>
           <button 
+            onClick={() => updateActiveTab({ path: "C:\\Users\\Nebulabs\\Documents" })}
             className="w-full flex items-center gap-2 px-3 py-1.5 rounded-lg"
-            style={{ backgroundColor: 'var(--os-accent-glow)', color: 'var(--os-accent)' }}
+            style={{ 
+              backgroundColor: activeTab.path === "C:\\Users\\Nebulabs\\Documents" ? 'var(--os-accent-glow)' : 'transparent',
+              color: activeTab.path === "C:\\Users\\Nebulabs\\Documents" ? 'var(--os-accent)' : '#d1d5db'
+            }}
           >
             <Folder size={14} /> Documents
           </button>
-          <button className="w-full flex items-center gap-2 px-3 py-1.5 rounded-lg hover:bg-white/5 text-xs text-gray-300">
+          <button 
+            onClick={() => updateActiveTab({ path: "C:\\Users\\Nebulabs\\Downloads" })}
+            className="w-full flex items-center gap-2 px-3 py-1.5 rounded-lg hover:bg-white/5 text-xs text-gray-300"
+          >
             <Download size={14} className="text-green-500" /> Downloads
           </button>
           <div className="h-px bg-white/5 my-2" />
-          <button className="w-full flex items-center gap-2 px-3 py-1.5 rounded-lg hover:bg-white/5 text-xs text-gray-300">
+          <button 
+            onClick={() => updateActiveTab({ path: "C:\\" })}
+            className="w-full flex items-center gap-2 px-3 py-1.5 rounded-lg hover:bg-white/5 text-xs text-gray-300"
+          >
             <HardDrive size={14} /> This PC
           </button>
         </div>
@@ -365,24 +576,67 @@ const Explorer: React.FC = () => {
                 {files.map((file) => (
                   <tr 
                     key={file.id} 
-                    onClick={() => setSelectedFile(file)}
+                    onClick={() => updateActiveTab({ selectedFileId: file.id })}
                     className="hover:bg-white/5 group cursor-default"
-                    style={{ backgroundColor: selectedFile?.id === file.id ? 'var(--os-accent-glow)' : undefined }}
+                    style={{ backgroundColor: activeTab.selectedFileId === file.id ? 'var(--os-accent-glow)' : undefined }}
                   >
                     <td className="py-2 px-2 flex items-center gap-3">
                       {file.type === 'folder' ? <Folder size={18} className="text-yellow-500" /> : <File size={18} className="text-gray-400" />}
-                      <span className="text-gray-200">{file.name}</span>
+                      {editingFileId === file.id ? (
+                        <input 
+                          autoFocus
+                          className="bg-white/10 border border-blue-500 rounded px-2 py-0.5 text-xs text-white outline-none"
+                          value={editingName}
+                          onChange={(e) => setEditingName(e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') renameFile(file.id, editingName);
+                            if (e.key === 'Escape') setEditingFileId(null);
+                          }}
+                          onBlur={() => renameFile(file.id, editingName)}
+                          onClick={(e) => e.stopPropagation()}
+                        />
+                      ) : (
+                        <span 
+                          className="text-gray-200 cursor-pointer hover:text-blue-400"
+                          onDoubleClick={(e) => {
+                            e.stopPropagation();
+                            setEditingFileId(file.id);
+                            setEditingName(file.name);
+                          }}
+                        >
+                          {file.name}
+                        </span>
+                      )}
                     </td>
                     <td className="py-2 px-2 text-gray-500">{file.date}</td>
-                    <td className="py-2 px-2 text-gray-500">{file.type === 'folder' ? 'File Folder' : 'Text Document'}</td>
+                    <td className="py-2 px-2 text-gray-500">
+                      {file.type === 'folder' ? 'File Folder' : 
+                       /\.(jpg|jpeg|png|gif|webp|svg)$/i.test(file.name) ? 'Image File' :
+                       /\.md$/i.test(file.name) ? 'Markdown Document' :
+                       /\.txt$/i.test(file.name) ? 'Text Document' : 'File'}
+                    </td>
                     <td className="py-2 px-2 text-gray-500">{file.size}</td>
                     <td className="py-2 px-2">
-                      <button 
-                        onClick={(e) => { e.stopPropagation(); deleteFile(file.id); }}
-                        className="p-1 hover:bg-red-500/20 text-gray-600 hover:text-red-500 rounded opacity-0 group-hover:opacity-100 transition-all"
-                      >
-                        <Trash2 size={14} />
-                      </button>
+                      <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all">
+                        <button 
+                          onClick={(e) => { 
+                            e.stopPropagation(); 
+                            setEditingFileId(file.id);
+                            setEditingName(file.name);
+                          }}
+                          className="p-1 hover:bg-white/10 text-gray-600 hover:text-white rounded"
+                          title="Rename"
+                        >
+                          <FileText size={14} />
+                        </button>
+                        <button 
+                          onClick={(e) => { e.stopPropagation(); deleteFile(file.id); }}
+                          className="p-1 hover:bg-red-500/20 text-gray-600 hover:text-red-500 rounded"
+                          title="Delete"
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}

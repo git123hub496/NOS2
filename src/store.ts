@@ -38,6 +38,11 @@ export interface Network {
   isSecure: boolean;
 }
 
+export interface ScreenConfig {
+  id: string;
+  isMain: boolean;
+}
+
 interface OSStore {
   isBooted: boolean;
   isLoggedIn: boolean;
@@ -50,6 +55,15 @@ interface OSStore {
   fontStyle: string;
   windows: WindowState[];
   activeWindowId: AppId | null;
+  
+  // Multi-screen
+  screens: ScreenConfig[];
+  screenOrientation: 'horizontal' | 'vertical';
+  isSyncing: boolean;
+  setSyncing: (syncing: boolean) => void;
+  addScreen: () => void;
+  removeScreen: (id: string) => void;
+  setScreenOrientation: (orientation: 'horizontal' | 'vertical') => void;
   
   // New System Services State
   processes: Process[];
@@ -170,6 +184,10 @@ export const useOSStore = create<OSStore>((set, get) => {
     windowTransparency: savedSettings.windowTransparency ?? 80,
     isTaskbarAutohide: savedSettings.isTaskbarAutohide ?? false,
 
+    screens: savedSettings.screens ?? [{ id: 'main', isMain: true }],
+    screenOrientation: savedSettings.screenOrientation ?? 'horizontal',
+    isSyncing: false,
+
     cursorScale: savedSettings.cursorScale ?? 1,
     cursorColor: savedSettings.cursorColor ?? 'white',
     isUpdating: false,
@@ -213,6 +231,8 @@ export const useOSStore = create<OSStore>((set, get) => {
         pinnedAppIds: state.pinnedAppIds,
         pinnedStartAppIds: state.pinnedStartAppIds,
         volume: state.volume,
+        screens: state.screens,
+        screenOrientation: state.screenOrientation,
       };
       localStorage.setItem(STORAGE_KEY, JSON.stringify(settings));
     },
@@ -315,6 +335,37 @@ export const useOSStore = create<OSStore>((set, get) => {
     },
     setCursorColor: (color) => {
       set({ cursorColor: color });
+      get().saveToLocal();
+    },
+
+    setSyncing: (syncing) => set({ isSyncing: syncing }),
+
+    addScreen: () => {
+      const { screens, setSyncing } = get();
+      if (screens.length >= 2) return; // Limit to 2 screens for now as requested
+      
+      setSyncing(true);
+      
+      // Simulate account sync and screen detection
+      setTimeout(() => {
+        const newScreen = { id: `screen-${Date.now()}`, isMain: false };
+        set({ 
+          screens: [...get().screens, newScreen],
+          isSyncing: false 
+        });
+        get().saveToLocal();
+      }, 2000);
+    },
+
+    removeScreen: (id) => {
+      const { screens } = get();
+      const newScreens = screens.filter(s => s.id !== id || s.isMain);
+      set({ screens: newScreens });
+      get().saveToLocal();
+    },
+
+    setScreenOrientation: (orientation) => {
+      set({ screenOrientation: orientation });
       get().saveToLocal();
     },
 

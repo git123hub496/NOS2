@@ -13,6 +13,7 @@ import NebulaSlides from './apps/NebulaSlides';
 import ProcessManager from './apps/ProcessManager';
 import NebulaBrowser from './apps/NebulaBrowser';
 import QuadraisAI from './apps/QuadraisAI';
+import Calculator from './apps/Calculator';
 import { 
   FileText, 
   Globe, 
@@ -62,15 +63,55 @@ import {
   Plus
 } from 'lucide-react';
 
-const Desktop: React.FC = () => {
+interface DesktopProps {
+  screenId: string;
+  isMain: boolean;
+}
+
+const Desktop: React.FC<DesktopProps> = ({ screenId, isMain }) => {
   const { 
     wallpaper, openApp, closeApp, isLiteMode, user,
     isWidgetsOpen, isChatOpen, toggleWidgets, toggleChat,
-    accentColor, setSearchQuery
+    accentColor, setSearchQuery, activeWindowId, windows
   } = useOSStore();
 
   const [contextMenu, setContextMenu] = useState<{ x: number, y: number } | null>(null);
+  const [focusedIconId, setFocusedIconId] = useState<string | null>(null);
   const menuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (activeWindowId) return; // Only navigate desktop if no window is active/focused
+
+      const currentIndex = desktopIcons.findIndex(icon => icon.id === focusedIconId);
+      
+      if (e.key === 'ArrowRight') {
+        e.preventDefault();
+        const nextIndex = (currentIndex + 1) % desktopIcons.length;
+        setFocusedIconId(desktopIcons[nextIndex].id);
+      } else if (e.key === 'ArrowLeft') {
+        e.preventDefault();
+        const prevIndex = (currentIndex - 1 + desktopIcons.length) % desktopIcons.length;
+        setFocusedIconId(desktopIcons[prevIndex].id);
+      } else if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        // Desktop icons are in a grid, but for now simple linear navigation is a good start
+        const nextIndex = (currentIndex + 1) % desktopIcons.length;
+        setFocusedIconId(desktopIcons[nextIndex].id);
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        const prevIndex = (currentIndex - 1 + desktopIcons.length) % desktopIcons.length;
+        setFocusedIconId(desktopIcons[prevIndex].id);
+      } else if (e.key === 'Enter' && focusedIconId) {
+        e.preventDefault();
+        const icon = desktopIcons.find(i => i.id === focusedIconId);
+        if (icon) openApp(icon.id as any, icon.name);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [focusedIconId, activeWindowId, openApp]);
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -117,8 +158,8 @@ const Desktop: React.FC = () => {
     <div 
       className={`fixed inset-0 overflow-hidden bg-cover bg-center transition-all duration-1000 ${isLiteMode ? 'lite-mode' : ''}`}
       style={{ backgroundImage: `url(${wallpaper})` }}
-      onContextMenu={handleContextMenu}
-      onClick={() => setContextMenu(null)}
+      onContextMenu={isMain ? handleContextMenu : undefined}
+      onClick={isMain ? () => setContextMenu(null) : undefined}
     >
       {/* Wallpaper Tint Overlay */}
       <div 
@@ -126,7 +167,9 @@ const Desktop: React.FC = () => {
         style={{ backgroundColor: 'var(--os-accent)' }}
       />
 
-      {/* Context Menu */}
+      {isMain && (
+        <>
+          {/* Context Menu */}
       <AnimatePresence>
         {contextMenu && (
           <motion.div
@@ -167,20 +210,26 @@ const Desktop: React.FC = () => {
         )}
       </AnimatePresence>
       {/* Desktop Icons */}
-      <div className="p-4 grid grid-flow-col grid-rows-[repeat(auto-fill,100px)] gap-2 w-fit">
+      <div className="p-4 grid grid-flow-col grid-rows-[repeat(auto-fill,80px)] sm:grid-rows-[repeat(auto-fill,100px)] gap-2 w-fit">
         {desktopIcons.map((icon) => (
           <button
             key={icon.id}
             onDoubleClick={() => openApp(icon.id as any, icon.name)}
-            className="w-24 h-24 flex flex-col items-center justify-center gap-2 rounded-lg hover:bg-white/10 transition-colors group"
+            onClick={() => {
+              if (typeof window !== 'undefined' && window.innerWidth < 640) {
+                openApp(icon.id as any, icon.name);
+              }
+            }}
+            className={`w-20 h-20 sm:w-24 sm:h-24 flex flex-col items-center justify-center gap-1 sm:gap-2 rounded-lg transition-colors group ${focusedIconId === icon.id ? 'bg-white/20 ring-2 ring-white/20' : 'hover:bg-white/10'}`}
+            onMouseEnter={() => setFocusedIconId(icon.id)}
           >
             <div 
-              className="group-hover:scale-110 transition-transform drop-shadow-lg"
+              className="group-hover:scale-110 transition-transform drop-shadow-lg scale-75 sm:scale-100"
               style={{ color: icon.color }}
             >
               {icon.icon}
             </div>
-            <span className="text-[11px] text-white font-medium text-center drop-shadow-md px-1">
+            <span className="text-[10px] sm:text-[11px] text-white font-medium text-center drop-shadow-md px-1 truncate w-full">
               {icon.name}
             </span>
           </button>
@@ -587,19 +636,7 @@ const Desktop: React.FC = () => {
       </Window>
 
       <Window id="calculator" title="Calculator">
-        <div className="h-full bg-[#0a0a0a] p-6 flex flex-col">
-          <div className="flex-1 flex flex-col justify-end p-4 mb-4 bg-white/5 rounded-2xl text-right">
-            <p className="text-gray-500 text-xs mb-1">0</p>
-            <h3 className="text-4xl font-mono font-bold text-white">0</h3>
-          </div>
-          <div className="grid grid-cols-4 gap-2">
-            {['C', '±', '%', '÷', '7', '8', '9', '×', '4', '5', '6', '-', '1', '2', '3', '+', '0', '.', '='].map(btn => (
-              <button key={btn} className={`aspect-square rounded-xl flex items-center justify-center text-sm font-bold transition-all ${['÷', '×', '-', '+', '='].includes(btn) ? 'bg-blue-600 text-white hover:bg-blue-500' : 'bg-white/5 text-gray-300 hover:bg-white/10'} ${btn === '0' ? 'col-span-2 aspect-auto' : ''}`}>
-                {btn}
-              </button>
-            ))}
-          </div>
-        </div>
+        <Calculator />
       </Window>
 
       <Window id="shop" title="Shop Nebulabs">
@@ -1030,6 +1067,8 @@ const Desktop: React.FC = () => {
           </motion.div>
         )}
       </AnimatePresence>
+      </>
+      )}
     </div>
   );
 };

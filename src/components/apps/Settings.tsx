@@ -20,7 +20,9 @@ import {
   Camera,
   Moon,
   Sun,
-  Check
+  Check,
+  Plus,
+  Trash2
 } from 'lucide-react';
 
 const Settings: React.FC = () => {
@@ -30,7 +32,7 @@ const Settings: React.FC = () => {
     cursorScale, setCursorScale, cursorColor, setCursorColor, isUpdating, updateProgress, updateStatus, startUpdate,
     isDarkMode, setDarkMode, taskbarTransparency, setTaskbarTransparency,
     windowTransparency, setWindowTransparency, isTaskbarAutohide, setTaskbarAutohide,
-    user, setProfilePicture
+    user, setProfilePicture, screens, screenOrientation, addScreen, removeScreen, setScreenOrientation
   } = useOSStore();
 
   const cursorColors = [
@@ -70,6 +72,25 @@ const Settings: React.FC = () => {
 
   const [activeTab, setActiveTab] = useState('Personalization');
   const [searchQuery, setSearchQuery] = useState('');
+
+  React.useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const currentIndex = sidebarItems.findIndex(item => item.id === activeTab);
+
+      if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        const nextIndex = (currentIndex + 1) % sidebarItems.length;
+        setActiveTab(sidebarItems[nextIndex].id);
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        const prevIndex = (currentIndex - 1 + sidebarItems.length) % sidebarItems.length;
+        setActiveTab(sidebarItems[prevIndex].id);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [activeTab]);
 
   const sidebarItems = [
     { id: 'Personalization', icon: <Palette size={18} /> },
@@ -340,6 +361,77 @@ const Settings: React.FC = () => {
                         <p className="text-[10px] uppercase tracking-widest mt-1 opacity-60">{style}</p>
                       </button>
                     ))}
+                  </div>
+                </div>
+
+                <div className="pt-8 border-t border-white/5 space-y-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h3 className="font-bold text-sm">Multi-Screen Configuration</h3>
+                      <p className="text-xs text-gray-500 mt-1">Manage and orient multiple displays</p>
+                    </div>
+                    <button 
+                      onClick={() => addScreen()}
+                      className="px-4 py-2 rounded-xl bg-blue-600 text-white text-xs font-bold hover:bg-blue-500 transition-all shadow-lg shadow-blue-600/20 flex items-center gap-2"
+                    >
+                      <Plus size={14} />
+                      <span>New Screen</span>
+                    </button>
+                  </div>
+
+                  <div className="grid grid-cols-1 gap-4">
+                    <div className="flex items-center justify-between p-4 rounded-2xl bg-white/5 border border-white/10">
+                      <div className="flex items-center gap-4">
+                        <div className="w-10 h-10 rounded-xl bg-blue-600/20 flex items-center justify-center text-blue-400">
+                          <Monitor size={20} />
+                        </div>
+                        <div>
+                          <p className="text-sm font-bold">Orientation</p>
+                          <p className="text-[10px] text-gray-500 uppercase tracking-widest">{screenOrientation}</p>
+                        </div>
+                      </div>
+                      <div className="flex bg-white/5 p-1 rounded-xl border border-white/10">
+                        <button 
+                          onClick={() => setScreenOrientation('horizontal')}
+                          className={`px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all ${screenOrientation === 'horizontal' ? 'bg-white/10 text-white' : 'text-gray-500 hover:text-gray-300'}`}
+                        >
+                          Horizontal
+                        </button>
+                        <button 
+                          onClick={() => setScreenOrientation('vertical')}
+                          className={`px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all ${screenOrientation === 'vertical' ? 'bg-white/10 text-white' : 'text-gray-500 hover:text-gray-300'}`}
+                        >
+                          Vertical
+                        </button>
+                      </div>
+                    </div>
+
+                    <div className="space-y-3">
+                      <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest ml-1">Active Displays</p>
+                      {screens.map((screen, idx) => (
+                        <div key={screen.id} className="flex items-center justify-between p-4 rounded-2xl bg-white/5 border border-white/10 group">
+                          <div className="flex items-center gap-4">
+                            <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${screen.isMain ? 'bg-blue-600 text-white' : 'bg-white/10 text-gray-400'}`}>
+                              <span className="text-sm font-bold">{idx + 1}</span>
+                            </div>
+                            <div>
+                              <p className="text-sm font-bold">Display {idx + 1}</p>
+                              <p className="text-[10px] text-gray-500 uppercase tracking-widest">
+                                {screen.isMain ? 'Primary Display' : 'Secondary Display'}
+                              </p>
+                            </div>
+                          </div>
+                          {!screen.isMain && (
+                            <button 
+                              onClick={() => removeScreen(screen.id)}
+                              className="p-2 rounded-lg bg-red-500/10 text-red-500 opacity-0 group-hover:opacity-100 transition-all hover:bg-red-500 hover:text-white"
+                            >
+                              <Trash2 size={14} />
+                            </button>
+                          )}
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 </div>
               </div>

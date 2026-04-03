@@ -26,10 +26,47 @@ const QuickSettings: React.FC = () => {
     processes,
     totalMemory,
     volume, setVolume,
-    selectedNetwork, setNetwork, networks
+    selectedNetwork, setNetwork, networks,
+    isDarkMode, setDarkMode
   } = useOSStore();
 
   const [isNetworkOpen, setIsNetworkOpen] = useState(false);
+  const [focusedIndex, setFocusedIndex] = useState<number | null>(null);
+
+  const toggles = [
+    { id: 'grayscale', label: 'Grayscale', icon: <Eye size={20} />, active: isGrayscale, action: toggleGrayscale },
+    { id: 'invert', label: 'Invert', icon: <Monitor size={20} />, active: isInverted, action: toggleInvert },
+    { id: 'lite', label: 'Lite Mode', icon: <Zap size={20} />, active: isLiteMode, action: () => setLiteMode(!isLiteMode) },
+    { id: 'dark', label: 'Light Mode', icon: <Sun size={20} />, active: !isDarkMode, action: () => setDarkMode(!isDarkMode) },
+  ];
+
+  React.useEffect(() => {
+    if (!isQuickSettingsOpen) return;
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'ArrowRight') {
+        e.preventDefault();
+        setFocusedIndex(prev => (prev === null ? 0 : (prev + 1) % toggles.length));
+      } else if (e.key === 'ArrowLeft') {
+        e.preventDefault();
+        setFocusedIndex(prev => (prev === null ? toggles.length - 1 : (prev - 1 + toggles.length) % toggles.length));
+      } else if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        setFocusedIndex(prev => (prev === null ? 0 : (prev + 2) % toggles.length));
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        setFocusedIndex(prev => (prev === null ? toggles.length - 1 : (prev - 2 + toggles.length) % toggles.length));
+      } else if (e.key === 'Enter' && focusedIndex !== null) {
+        e.preventDefault();
+        toggles[focusedIndex].action();
+      } else if (e.key === 'Escape') {
+        toggleQuickSettings();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isQuickSettingsOpen, focusedIndex, toggles, toggleQuickSettings]);
 
   if (!isQuickSettingsOpen) return null;
 
@@ -43,31 +80,19 @@ const QuickSettings: React.FC = () => {
       exit={{ opacity: 0, y: 20, scale: 0.95 }}
       className="fixed bottom-14 right-2 w-80 z-[2000] glass-dark rounded-2xl border border-white/10 p-4 window-shadow"
     >
-      <div className="grid grid-cols-3 gap-2 mb-6">
-        <button 
-          onClick={toggleGrayscale}
-          className={`flex flex-col items-center gap-2 p-3 rounded-xl transition-colors ${isGrayscale ? 'text-white' : 'bg-white/5 text-gray-400 hover:bg-white/10'}`}
-          style={{ backgroundColor: isGrayscale ? 'var(--os-accent)' : undefined }}
-        >
-          <Eye size={20} />
-          <span className="text-[10px] font-medium">Grayscale</span>
-        </button>
-        <button 
-          onClick={toggleInvert}
-          className={`flex flex-col items-center gap-2 p-3 rounded-xl transition-colors ${isInverted ? 'text-white' : 'bg-white/5 text-gray-400 hover:bg-white/10'}`}
-          style={{ backgroundColor: isInverted ? 'var(--os-accent)' : undefined }}
-        >
-          <Monitor size={20} />
-          <span className="text-[10px] font-medium">Invert</span>
-        </button>
-        <button 
-          onClick={() => setLiteMode(!isLiteMode)}
-          className={`flex flex-col items-center gap-2 p-3 rounded-xl transition-colors ${isLiteMode ? 'text-white' : 'bg-white/5 text-gray-400 hover:bg-white/10'}`}
-          style={{ backgroundColor: isLiteMode ? 'var(--os-accent)' : undefined }}
-        >
-          <Zap size={20} />
-          <span className="text-[10px] font-medium">Lite Mode</span>
-        </button>
+      <div className="grid grid-cols-2 gap-2 mb-6">
+        {toggles.map((toggle, index) => (
+          <button 
+            key={toggle.id}
+            onClick={toggle.action}
+            onMouseEnter={() => setFocusedIndex(index)}
+            className={`flex flex-col items-center gap-2 p-3 rounded-xl transition-colors ${toggle.active ? 'text-white' : 'bg-white/5 text-gray-400 hover:bg-white/10'} ${focusedIndex === index ? 'ring-2 ring-white/20' : ''}`}
+            style={{ backgroundColor: toggle.active ? 'var(--os-accent)' : undefined }}
+          >
+            {toggle.icon}
+            <span className="text-[10px] font-medium">{toggle.label}</span>
+          </button>
+        ))}
       </div>
 
       <div className="space-y-4">

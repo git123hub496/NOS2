@@ -54,11 +54,7 @@ const Taskbar: React.FC = () => {
   const [time, setTime] = useState(new Date());
   const [contextMenu, setContextMenu] = useState<{ x: number, y: number, appId?: AppId } | null>(null);
   const [isHovered, setIsHovered] = useState(false);
-
-  React.useEffect(() => {
-    const timer = setInterval(() => setTime(new Date()), 1000);
-    return () => clearInterval(timer);
-  }, []);
+  const [focusedAppId, setFocusedAppId] = useState<AppId | null>(null);
 
   const allApps: { id: AppId; name: string; icon: React.ReactNode; color: string }[] = [
     { id: 'search', name: 'Nebula Search', icon: <Search size={20} />, color: 'var(--os-accent)' },
@@ -93,6 +89,40 @@ const Taskbar: React.FC = () => {
 
   const pinnedApps = allApps.filter(app => pinnedAppIds.includes(app.id));
   const openUnpinnedApps = allApps.filter(app => !pinnedAppIds.includes(app.id) && windows.some(w => w.id === app.id));
+  const taskbarApps = [...pinnedApps, ...openUnpinnedApps];
+
+  React.useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (isStartOpen || isQuickSettingsOpen) return;
+
+      const currentIndex = taskbarApps.findIndex(app => app.id === focusedAppId);
+
+      if (e.key === 'ArrowRight') {
+        e.preventDefault();
+        const nextIndex = (currentIndex + 1) % taskbarApps.length;
+        setFocusedAppId(taskbarApps[nextIndex].id);
+      } else if (e.key === 'ArrowLeft') {
+        e.preventDefault();
+        const prevIndex = (currentIndex - 1 + taskbarApps.length) % taskbarApps.length;
+        setFocusedAppId(taskbarApps[prevIndex].id);
+      } else if (e.key === 'Enter' && focusedAppId) {
+        e.preventDefault();
+        const app = taskbarApps.find(a => a.id === focusedAppId);
+        if (app) {
+          const isOpen = windows.some(w => w.id === app.id);
+          isOpen ? focusApp(app.id) : openApp(app.id, app.name);
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [focusedAppId, isStartOpen, isQuickSettingsOpen, taskbarApps, windows, focusApp, openApp]);
+
+  React.useEffect(() => {
+    const timer = setInterval(() => setTime(new Date()), 1000);
+    return () => clearInterval(timer);
+  }, []);
 
   const handleContextMenu = (e: React.MouseEvent, appId?: AppId) => {
     e.preventDefault();
@@ -118,7 +148,8 @@ const Taskbar: React.FC = () => {
   };
 
   const isVertical = taskbarPosition === 'left' || taskbarPosition === 'right';
-  const isHidden = isTaskbarAutohide && !isHovered && !isStartOpen && !isQuickSettingsOpen;
+  const isAnyMaximized = windows.some(w => w.isMaximized && w.isOpen && !w.isMinimized);
+  const isHidden = isTaskbarAutohide && !isHovered && !isStartOpen && !isQuickSettingsOpen && isAnyMaximized;
 
   return (
     <>
@@ -189,7 +220,7 @@ const Taskbar: React.FC = () => {
           </button>
           
           {!isVertical && (
-            <div className="flex items-center gap-2">
+            <div className="hidden md:flex items-center gap-2">
               <div className="relative group">
                 <Search 
                   size={14} 
@@ -233,7 +264,8 @@ const Taskbar: React.FC = () => {
                 key={app.id}
                 onClick={() => isOpen ? focusApp(app.id) : openApp(app.id, app.name)}
                 onContextMenu={(e) => handleContextMenu(e, app.id)}
-                className={`p-2 rounded-lg transition-all relative group ${isActive ? 'bg-white/10' : 'hover:bg-white/5'}`}
+                onMouseEnter={() => setFocusedAppId(app.id)}
+                className={`p-2 rounded-lg transition-all relative group ${isActive || focusedAppId === app.id ? 'bg-white/10' : 'hover:bg-white/5'}`}
                 title={`${app.name} (${isPinned ? 'Pinned' : 'Unpinned'})`}
               >
                 <div 
@@ -255,7 +287,7 @@ const Taskbar: React.FC = () => {
 
         <div className={`flex items-center gap-3 px-2 ${isVertical ? 'flex-col' : 'flex-row'}`}>
           {!isVertical && (
-            <div className="flex items-center gap-3 text-gray-400 mr-2">
+            <div className="hidden sm:flex items-center gap-3 text-gray-400 mr-2">
               <button 
                 onClick={() => openApp('phone', 'Nebula Phone')}
                 className="hover:text-white transition-colors"
@@ -283,16 +315,16 @@ const Taskbar: React.FC = () => {
             onClick={toggleQuickSettings}
             className={`flex flex-col items-center justify-center select-none px-2 rounded-lg transition-colors ${isQuickSettingsOpen ? 'bg-white/10' : 'hover:bg-white/5'} ${isVertical ? 'py-1' : ''}`}
           >
-            <span className="text-[11px] font-medium leading-none">
+            <span className="text-[10px] md:text-[11px] font-medium leading-none">
               {time.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
             </span>
-            <span className="text-[9px] text-gray-500 mt-1">
+            <span className="hidden md:block text-[9px] text-gray-500 mt-1">
               {time.toLocaleDateString([], { month: 'short', day: 'numeric' })}
             </span>
           </button>
 
           {!isVertical && (
-            <div className="flex items-center ml-1">
+            <div className="hidden sm:flex items-center ml-1">
               <div 
                 className="w-8 h-8 rounded-full flex items-center justify-center overflow-hidden border shadow-lg cursor-pointer hover:scale-110 transition-transform"
                 style={{ borderColor: 'var(--os-accent-border)', backgroundColor: 'var(--os-accent-glow)' }}
