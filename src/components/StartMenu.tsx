@@ -62,8 +62,6 @@ const StartMenu: React.FC<{ isOpen: boolean; onClose: () => void }> = ({ isOpen,
     }
   };
 
-  if (!isOpen) return null;
-
   const allApps: { id: AppId; name: string; icon: React.ReactNode; color: string }[] = [
     { id: 'store', name: 'App Store', icon: <ShoppingBag size={20} />, color: 'var(--os-accent)' },
     { id: 'explorer', name: 'File Explorer', icon: <FileText size={20} />, color: 'var(--os-accent)' },
@@ -138,6 +136,8 @@ const StartMenu: React.FC<{ isOpen: boolean; onClose: () => void }> = ({ isOpen,
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isOpen, focusedAppId, filteredApps, openApp, onClose, search]);
+
+  if (!isOpen) return null;
 
   const handleContextMenu = (e: React.MouseEvent, appId: AppId) => {
     e.preventDefault();
