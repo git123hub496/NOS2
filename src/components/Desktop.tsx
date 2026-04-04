@@ -14,6 +14,7 @@ import ProcessManager from './apps/ProcessManager';
 import NebulaBrowser from './apps/NebulaBrowser';
 import QuadraisAI from './apps/QuadraisAI';
 import Calculator from './apps/Calculator';
+import Phone from './apps/Phone';
 import { 
   FileText, 
   Globe, 
@@ -470,97 +471,7 @@ const Desktop: React.FC = () => {
       </Window>
       
       <Window id="phone" title="Nebula Phone (Remote)">
-        <div className="h-full bg-black flex items-center justify-center p-4">
-          <div className="w-[280px] h-[580px] bg-[#1a1a1a] rounded-[3rem] border-[6px] border-[#333] relative overflow-hidden shadow-2xl flex flex-col">
-            {/* Phone Notch */}
-            <div className="absolute top-0 left-1/2 -translate-x-1/2 w-32 h-6 bg-black rounded-b-2xl z-20" />
-            
-            {/* Phone Status Bar */}
-            <div className="h-10 flex items-end justify-between px-6 pb-1 text-[10px] text-white font-bold z-10">
-              <span>{new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
-              <div className="flex items-center gap-1.5">
-                <Signal size={10} />
-                <Wifi size={10} />
-                <Battery size={10} />
-              </div>
-            </div>
-
-            {/* Phone Screen Content */}
-            <div className="flex-1 bg-gradient-to-b from-purple-900/40 to-black p-6 flex flex-col">
-              <div className="mt-8 mb-6">
-                <p className="text-gray-400 text-[10px] uppercase tracking-widest font-bold mb-1">Locating...</p>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h3 className="text-4xl font-bold text-white">39°</h3>
-                    <p className="text-xs text-gray-400">Partly Cloudy</p>
-                  </div>
-                  <Cloud size={48} style={{ color: 'var(--os-accent)' }} />
-                </div>
-              </div>
-
-              <div className="bg-white/10 backdrop-blur-md rounded-2xl p-4 mb-4">
-                <div className="flex items-center gap-3 mb-2">
-                  <CreditCard size={16} style={{ color: 'var(--os-accent)' }} />
-                  <span className="text-[10px] text-gray-400 uppercase font-bold">Nebula Pay</span>
-                </div>
-                <p className="text-xs text-white font-bold">Active Link</p>
-              </div>
-
-              <div className="bg-white/10 backdrop-blur-md rounded-2xl p-4 mb-6">
-                <div className="flex items-center gap-3 mb-2">
-                  <Heart size={16} style={{ color: 'var(--os-accent)' }} />
-                  <span className="text-[10px] text-gray-400 uppercase font-bold">Vitals</span>
-                </div>
-                <p className="text-xs text-white font-bold">72 BPM</p>
-              </div>
-
-              <div className="flex-1" />
-
-              <div className="grid grid-cols-4 gap-4 mb-4">
-                {[
-                  { icon: <MessageSquare size={20} />, label: 'Messages' },
-                  { icon: <CreditCard size={20} />, label: 'Pay' },
-                  { icon: <Globe size={20} />, label: 'Photos' },
-                  { icon: <SettingsIcon size={20} />, label: 'Settings' },
-                ].map((app, i) => (
-                  <div key={i} className="flex flex-col items-center gap-1">
-                    <div 
-                      className="w-10 h-10 rounded-xl flex items-center justify-center text-white shadow-lg"
-                      style={{ backgroundColor: 'var(--os-accent)' }}
-                    >
-                      {app.icon}
-                    </div>
-                    <span className="text-[8px] text-gray-400 uppercase font-bold">{app.label}</span>
-                  </div>
-                ))}
-              </div>
-              
-              <div className="grid grid-cols-4 gap-4">
-                {[
-                  { icon: <Globe size={20} />, label: 'Browser' },
-                  { icon: <SearchIcon size={20} />, label: 'Search' },
-                  { icon: <Heart size={20} />, label: 'Health' },
-                  { icon: <ShoppingBag size={20} />, label: 'Store' },
-                ].map((app, i) => (
-                  <div key={i} className="flex flex-col items-center gap-1">
-                    <div 
-                      className="w-10 h-10 rounded-xl flex items-center justify-center text-white shadow-lg"
-                      style={{ backgroundColor: 'var(--os-accent)' }}
-                    >
-                      {app.icon}
-                    </div>
-                    <span className="text-[8px] text-gray-400 uppercase font-bold">{app.label}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Phone Home Bar */}
-            <div className="h-6 flex items-center justify-center">
-              <div className="w-20 h-1 bg-white/20 rounded-full" />
-            </div>
-          </div>
-        </div>
+        <Phone />
       </Window>
 
       <Window id="notepad" title="Untitled - Notepad">
