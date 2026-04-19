@@ -180,10 +180,6 @@ export default function App() {
           e.preventDefault();
           openApp('search', 'Nebula Search');
         }
-        if (e.key.toLowerCase() === 't') {
-          e.preventDefault();
-          openApp('process-manager', 'System Monitor');
-        }
         if (e.key.toLowerCase() === 'r') {
           e.preventDefault();
           // Use a more robust check for confirm if possible, but for now stick to the request

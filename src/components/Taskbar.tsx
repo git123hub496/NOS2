@@ -177,18 +177,6 @@ const Taskbar: React.FC = () => {
             Rotate Taskbar
           </button>
 
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              openApp('process-manager', 'System Monitor');
-              setContextMenu(null);
-            }}
-            className="w-full text-left px-3 py-2 rounded-lg text-xs hover:bg-white/10 text-gray-300 flex items-center gap-2 transition-colors mt-1"
-          >
-            <Activity size={14} />
-            Task Manager
-          </button>
-
           {contextMenu.appId && pinnedAppIds.includes(contextMenu.appId) && (
             <button
               onClick={(e) => {

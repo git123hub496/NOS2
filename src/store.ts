@@ -22,10 +22,6 @@ export interface WindowState {
   isMaximized: boolean;
   zIndex: number;
   displayId: string;
-  x: number;
-  y: number;
-  width: number;
-  height: number;
 }
 
 export interface Display {
@@ -127,8 +123,6 @@ interface OSStore {
   minimizeApp: (id: AppId) => void;
   maximizeApp: (id: AppId) => void;
   focusApp: (id: AppId) => void;
-  updateAppPosition: (id: AppId, x: number, y: number) => void;
-  resizeApp: (id: AppId, width: number, height: number, x?: number, y?: number) => void;
   
   // System Actions
   toggleGrayscale: () => void;
@@ -628,13 +622,6 @@ export const useOSStore = create<OSStore>((set, get) => {
           processes: newProcesses
         };
       }
-
-      // Default centered position
-      const defaultWidth = 800;
-      const defaultHeight = 500;
-      const x = (typeof window !== 'undefined' ? (window.innerWidth - defaultWidth) / 2 : 100) + (state.windows.length * 20);
-      const y = (typeof window !== 'undefined' ? (window.innerHeight - defaultHeight) / 2 : 100) + (state.windows.length * 20);
-
       const newWindow: WindowState = {
         id,
         title,
@@ -642,11 +629,7 @@ export const useOSStore = create<OSStore>((set, get) => {
         isMinimized: false,
         isMaximized: false,
         zIndex: state.windows.length + 10,
-        displayId: state.currentDisplayId,
-        x,
-        y,
-        width: defaultWidth,
-        height: defaultHeight
+        displayId: state.currentDisplayId
       };
       return { 
         windows: [...state.windows, newWindow],
@@ -676,18 +659,6 @@ export const useOSStore = create<OSStore>((set, get) => {
         windows: state.windows.map(w => w.id === id ? { ...w, zIndex: maxZ + 1, isMinimized: false } : w),
         activeWindowId: id
       };
-    }),
-    updateAppPosition: (id, x, y) => set((state) => ({
-      windows: state.windows.map(w => w.id === id ? { ...w, x, y } : w)
-    })),
-    resizeApp: (id, width, height, x, y) => set((state) => ({
-      windows: state.windows.map(w => w.id === id ? { 
-        ...w, 
-        width, 
-        height,
-        ...(x !== undefined ? { x } : {}),
-        ...(y !== undefined ? { y } : {})
-      } : w)
-    }))
+    })
   };
 });
