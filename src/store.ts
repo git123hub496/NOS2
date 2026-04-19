@@ -22,6 +22,7 @@ export interface WindowState {
   isMaximized: boolean;
   zIndex: number;
   displayId: string;
+  snapState?: 'left' | 'right' | 'none';
 }
 
 export interface Display {
@@ -122,6 +123,7 @@ interface OSStore {
   closeApp: (id: AppId) => void;
   minimizeApp: (id: AppId) => void;
   maximizeApp: (id: AppId) => void;
+  snapApp: (id: AppId, side: 'left' | 'right' | 'none') => void;
   focusApp: (id: AppId) => void;
   
   // System Actions
@@ -650,7 +652,11 @@ export const useOSStore = create<OSStore>((set, get) => {
     })),
 
     maximizeApp: (id) => set((state) => ({
-      windows: state.windows.map(w => w.id === id ? { ...w, isMaximized: !w.isMaximized } : w)
+      windows: state.windows.map(w => w.id === id ? { ...w, isMaximized: !w.isMaximized, snapState: 'none' } : w)
+    })),
+
+    snapApp: (id, side) => set((state) => ({
+      windows: state.windows.map(w => w.id === id ? { ...w, snapState: side, isMaximized: false } : w)
     })),
 
     focusApp: (id) => set((state) => {

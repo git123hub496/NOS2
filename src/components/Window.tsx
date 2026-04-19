@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion } from 'motion/react';
-import { X, Minus, Square, Maximize2, Monitor } from 'lucide-react';
+import { X, Minus, Square, Maximize2, Monitor, LayoutGrid } from 'lucide-react';
 import { useOSStore, AppId } from '../store';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
@@ -18,15 +18,29 @@ interface WindowProps {
 const Window: React.FC<WindowProps> = ({ id, title, children }) => {
   const { 
     windows, activeWindowId, closeApp, minimizeApp, maximizeApp, focusApp, 
-    currentDisplayId, displays, moveWindowToDisplay 
+    currentDisplayId, displays, moveWindowToDisplay, snapApp
   } = useOSStore();
   const windowState = windows.find(w => w.id === id);
+  const [showSnapLayouts, setShowSnapLayouts] = React.useState(false);
+  const snapTimeoutRef = React.useRef<NodeJS.Timeout | null>(null);
 
   if (!windowState || !windowState.isOpen || windowState.isMinimized || windowState.displayId !== currentDisplayId) return null;
 
   const isActive = activeWindowId === id;
   const isMobile = typeof window !== 'undefined' && window.innerWidth < 640;
   const isMaximized = windowState.isMaximized || isMobile;
+  const isSnapped = windowState.snapState && windowState.snapState !== 'none';
+
+  const handleSnapHover = () => {
+    if (snapTimeoutRef.current) clearTimeout(snapTimeoutRef.current);
+    setShowSnapLayouts(true);
+  };
+
+  const handleSnapLeave = () => {
+    snapTimeoutRef.current = setTimeout(() => {
+      setShowSnapLayouts(false);
+    }, 300);
+  };
 
   const otherDisplays = displays.filter(d => d.id !== currentDisplayId);
 
@@ -37,12 +51,12 @@ const Window: React.FC<WindowProps> = ({ id, title, children }) => {
         opacity: 1, 
         scale: 1, 
         y: 0,
-        width: isMaximized ? '100%' : '800px',
-        height: isMaximized ? 'calc(100% - 48px)' : '500px',
-        top: isMaximized ? 0 : '15%',
-        left: isMaximized ? 0 : '20%',
+        width: isMaximized ? '100%' : (isSnapped ? '50%' : '800px'),
+        height: isMaximized || isSnapped ? 'calc(100% - 48px)' : '500px',
+        top: isMaximized || isSnapped ? 0 : '15%',
+        left: isMaximized ? 0 : (windowState.snapState === 'left' ? 0 : (windowState.snapState === 'right' ? '50%' : '20%')),
       }}
-      drag={!isMaximized}
+      drag={!isMaximized && !isSnapped}
       dragMomentum={false}
       onMouseDown={() => focusApp(id)}
       style={{ 
@@ -93,12 +107,43 @@ const Window: React.FC<WindowProps> = ({ id, title, children }) => {
               >
                 <Minus size={14} className="text-gray-400" />
               </button>
-              <button 
-                onClick={(e) => { e.stopPropagation(); maximizeApp(id); }}
-                className="p-1.5 hover:bg-white/10 rounded-md transition-colors"
+              <div 
+                className="relative"
+                onMouseEnter={handleSnapHover}
+                onMouseLeave={handleSnapLeave}
               >
-                {windowState.isMaximized ? <Square size={12} className="text-gray-400" /> : <Maximize2 size={12} className="text-gray-400" />}
-              </button>
+                <button 
+                  onClick={(e) => { e.stopPropagation(); maximizeApp(id); }}
+                  className="p-1.5 hover:bg-white/10 rounded-md transition-colors"
+                >
+                  {windowState.isMaximized ? <Square size={12} className="text-gray-400" /> : <Maximize2 size={12} className="text-gray-400" />}
+                </button>
+
+                {showSnapLayouts && (
+                  <div className="absolute top-full right-0 mt-1 p-2 bg-[#0a0c10]/95 backdrop-blur-xl border border-white/10 rounded-lg shadow-2xl z-50 flex gap-2 w-32">
+                    <button 
+                      onClick={(e) => { e.stopPropagation(); snapApp(id, 'left'); setShowSnapLayouts(false); }}
+                      className="flex-1 aspect-square rounded border border-white/10 hover:border-blue-500/50 hover:bg-blue-500/10 transition-all group flex flex-col"
+                      title="Snap Left"
+                    >
+                      <div className="flex-1 flex w-full">
+                        <div className="w-1/2 h-full bg-blue-500/30 rounded-sm m-0.5 border border-blue-500/50" />
+                        <div className="w-1/2 h-full bg-white/5 rounded-sm m-0.5 border border-white/5" />
+                      </div>
+                    </button>
+                    <button 
+                      onClick={(e) => { e.stopPropagation(); snapApp(id, 'right'); setShowSnapLayouts(false); }}
+                      className="flex-1 aspect-square rounded border border-white/10 hover:border-blue-500/50 hover:bg-blue-500/10 transition-all group flex flex-col"
+                      title="Snap Right"
+                    >
+                      <div className="flex-1 flex w-full">
+                        <div className="w-1/2 h-full bg-white/5 rounded-sm m-0.5 border border-white/5" />
+                        <div className="w-1/2 h-full bg-blue-500/30 rounded-sm m-0.5 border border-blue-500/50" />
+                      </div>
+                    </button>
+                  </div>
+                )}
+              </div>
             </>
           )}
           <button 
