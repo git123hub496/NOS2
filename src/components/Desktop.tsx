@@ -15,6 +15,7 @@ import NebulaBrowser from './apps/NebulaBrowser';
 import QuadraisAI from './apps/QuadraisAI';
 import Calculator from './apps/Calculator';
 import Phone from './apps/Phone';
+import Maps from './apps/Maps';
 import { 
   FileText, 
   Globe, 
@@ -504,16 +505,7 @@ const Desktop: React.FC = () => {
       </Window>
 
       <Window id="maps" title="Nebula Maps">
-        <div className="h-full bg-[#0a0a0a] flex items-center justify-center relative overflow-hidden">
-          <Map size={120} className="text-white/5" />
-          <div className="absolute inset-0 flex flex-col items-center justify-center p-8 text-center">
-            <h3 className="text-2xl font-bold text-white mb-2">Nebula Maps</h3>
-            <p className="text-xs text-gray-500 max-w-xs">Satellite imagery and navigation for the Nebula system.</p>
-            <div className="mt-8 w-full max-w-sm h-32 bg-white/5 rounded-2xl border border-white/10 flex items-center justify-center">
-              <span className="text-[10px] uppercase tracking-widest text-gray-600">Loading Map Data...</span>
-            </div>
-          </div>
-        </div>
+        <Maps />
       </Window>
 
       <Window id="calendar" title="Calendar">
