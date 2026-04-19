@@ -55,12 +55,95 @@ export default function App() {
     channel.onmessage = handleMessage;
 
     const syncInterval = setInterval(() => {
-      channel.postMessage({ type: 'SYNC_STATE', state: useOSStore.getState() });
+      const state = useOSStore.getState();
+      // Manually pick serializable properties to avoid DataCloneError
+      const syncState = {
+        isBooted: state.isBooted,
+        isLoggedIn: state.isLoggedIn,
+        isAuthReady: state.isAuthReady,
+        isSetupComplete: state.isSetupComplete,
+        user: state.user,
+        wallpaper: state.wallpaper,
+        accentColor: state.accentColor,
+        fontStyle: state.fontStyle,
+        windows: state.windows,
+        activeWindowId: state.activeWindowId,
+        processes: state.processes,
+        totalMemory: state.totalMemory,
+        isGrayscale: state.isGrayscale,
+        isInverted: state.isInverted,
+        isQuickSettingsOpen: state.isQuickSettingsOpen,
+        isWidgetsOpen: state.isWidgetsOpen,
+        isChatOpen: state.isChatOpen,
+        isDarkMode: state.isDarkMode,
+        taskbarTransparency: state.taskbarTransparency,
+        windowTransparency: state.windowTransparency,
+        isTaskbarAutohide: state.isTaskbarAutohide,
+        cursorScale: state.cursorScale,
+        cursorColor: state.cursorColor,
+        isUpdating: state.isUpdating,
+        updateProgress: state.updateProgress,
+        updateStatus: state.updateStatus,
+        taskbarPosition: state.taskbarPosition,
+        pinnedAppIds: state.pinnedAppIds,
+        pinnedStartAppIds: state.pinnedStartAppIds,
+        isRestarting: state.isRestarting,
+        isShutDown: state.isShutDown,
+        searchQuery: state.searchQuery,
+        browserUrl: state.browserUrl,
+        volume: state.volume,
+        selectedNetwork: state.selectedNetwork,
+        networks: state.networks,
+        savedUsers: state.savedUsers,
+        displays: state.displays
+      };
+      channel.postMessage({ type: 'SYNC_STATE', state: syncState });
     }, 500);
 
     const handleUnload = () => {
       unregisterDisplay(currentDisplayId);
-      channel.postMessage({ type: 'SYNC_STATE', state: useOSStore.getState() });
+      const state = useOSStore.getState();
+      const syncState = {
+        isBooted: state.isBooted,
+        isLoggedIn: state.isLoggedIn,
+        isAuthReady: state.isAuthReady,
+        isSetupComplete: state.isSetupComplete,
+        user: state.user,
+        wallpaper: state.wallpaper,
+        accentColor: state.accentColor,
+        fontStyle: state.fontStyle,
+        windows: state.windows,
+        activeWindowId: state.activeWindowId,
+        processes: state.processes,
+        totalMemory: state.totalMemory,
+        isGrayscale: state.isGrayscale,
+        isInverted: state.isInverted,
+        isQuickSettingsOpen: state.isQuickSettingsOpen,
+        isWidgetsOpen: state.isWidgetsOpen,
+        isChatOpen: state.isChatOpen,
+        isDarkMode: state.isDarkMode,
+        taskbarTransparency: state.taskbarTransparency,
+        windowTransparency: state.windowTransparency,
+        isTaskbarAutohide: state.isTaskbarAutohide,
+        cursorScale: state.cursorScale,
+        cursorColor: state.cursorColor,
+        isUpdating: state.isUpdating,
+        updateProgress: state.updateProgress,
+        updateStatus: state.updateStatus,
+        taskbarPosition: state.taskbarPosition,
+        pinnedAppIds: state.pinnedAppIds,
+        pinnedStartAppIds: state.pinnedStartAppIds,
+        isRestarting: state.isRestarting,
+        isShutDown: state.isShutDown,
+        searchQuery: state.searchQuery,
+        browserUrl: state.browserUrl,
+        volume: state.volume,
+        selectedNetwork: state.selectedNetwork,
+        networks: state.networks,
+        savedUsers: state.savedUsers,
+        displays: state.displays
+      };
+      channel.postMessage({ type: 'SYNC_STATE', state: syncState });
       channel.close();
     };
 
@@ -96,6 +179,10 @@ export default function App() {
         if (e.key.toLowerCase() === 'f') {
           e.preventDefault();
           openApp('search', 'Nebula Search');
+        }
+        if (e.key.toLowerCase() === 't') {
+          e.preventDefault();
+          openApp('process-manager', 'System Monitor');
         }
         if (e.key.toLowerCase() === 'r') {
           e.preventDefault();

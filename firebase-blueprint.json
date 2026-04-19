@@ -8,7 +8,6 @@
         "uid": { "type": "string", "description": "Unique identifier for the user." },
         "displayName": { "type": "string", "description": "Public name of the user." },
         "email": { "type": "string", "format": "email", "description": "User's email address." },
-        "isLiteMode": { "type": "boolean", "description": "Whether the user has LITE mode enabled." },
         "wallpaper": { "type": "string", "format": "uri", "description": "URL of the user's desktop wallpaper." },
         "createdAt": { "type": "string", "format": "date-time", "description": "When the account was created." }
       },

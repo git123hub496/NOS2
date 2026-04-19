@@ -41,7 +41,7 @@ import { signOut } from 'firebase/auth';
 
 const StartMenu: React.FC<{ isOpen: boolean; onClose: () => void }> = ({ isOpen, onClose }) => {
   const { 
-    openApp, isLiteMode, powerOff, restart, user, setUser, 
+    openApp, powerOff, restart, user, setUser, 
     pinnedStartAppIds, togglePinStartApp, pinnedAppIds, togglePinApp
   } = useOSStore();
   const [search, setSearch] = useState("");
@@ -158,7 +158,7 @@ const StartMenu: React.FC<{ isOpen: boolean; onClose: () => void }> = ({ isOpen,
       initial={{ opacity: 0, y: 20, scale: 0.95 }}
       animate={{ opacity: 1, y: 0, scale: 1 }}
       exit={{ opacity: 0, y: 20, scale: 0.95 }}
-      className={`fixed bottom-14 left-2 sm:w-[400px] sm:h-[550px] w-[calc(100%-16px)] h-[calc(100%-70px)] z-[1000] flex flex-col overflow-hidden window-shadow ${isLiteMode ? 'bg-[#1a1a1a] border border-[#333]' : 'glass-dark rounded-2xl border border-white/10'}`}
+      className={`fixed bottom-14 left-2 sm:w-[400px] sm:h-[550px] w-[calc(100%-16px)] h-[calc(100%-70px)] z-[1000] flex flex-col overflow-hidden window-shadow glass-dark rounded-2xl border border-white/10`}
       onClick={() => setContextMenu(null)}
     >
       {/* Context Menu */}

@@ -66,7 +66,7 @@ import {
 
 const Desktop: React.FC = () => {
   const { 
-    wallpaper, openApp, closeApp, isLiteMode, user,
+    wallpaper, openApp, closeApp, user,
     isWidgetsOpen, isChatOpen, toggleWidgets, toggleChat,
     accentColor, setSearchQuery, activeWindowId
   } = useOSStore();
@@ -152,7 +152,7 @@ const Desktop: React.FC = () => {
 
   return (
     <div 
-      className={`fixed inset-0 overflow-hidden bg-cover bg-center transition-all duration-1000 ${isLiteMode ? 'lite-mode' : ''}`}
+      className={`fixed inset-0 overflow-hidden bg-cover bg-center transition-all duration-1000`}
       style={{ backgroundImage: `url(${wallpaper})` }}
       onContextMenu={handleContextMenu}
       onClick={() => setContextMenu(null)}

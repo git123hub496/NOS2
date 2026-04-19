@@ -26,7 +26,7 @@ import {
 
 const Settings: React.FC = () => {
   const { 
-    isLiteMode, setLiteMode, wallpaper, setWallpaper, 
+    wallpaper, setWallpaper, 
     accentColor, setAccentColor, fontStyle, setFontStyle,
     cursorScale, setCursorScale, cursorColor, setCursorColor, isUpdating, updateProgress, updateStatus, startUpdate,
     isDarkMode, setDarkMode, taskbarTransparency, setTaskbarTransparency,
@@ -351,20 +351,6 @@ const Settings: React.FC = () => {
               </div>
 
               <div className="bg-white/5 rounded-3xl p-8 border border-white/5 space-y-8">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h3 className="font-bold text-sm">Lite Mode</h3>
-                    <p className="text-xs text-gray-500 mt-1">Disable transparency and blur for better performance</p>
-                  </div>
-                  <button 
-                    onClick={() => setLiteMode(!isLiteMode)}
-                    className="w-12 h-6 rounded-full transition-all relative"
-                    style={{ backgroundColor: isLiteMode ? 'var(--os-accent)' : '#374151' }}
-                  >
-                    <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all ${isLiteMode ? 'left-7' : 'left-1'}`} />
-                  </button>
-                </div>
-
                 <div className="space-y-4">
                   <h3 className="text-sm font-medium">Font Style</h3>
                   <div className="grid grid-cols-2 gap-4">

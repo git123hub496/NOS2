@@ -22,6 +22,10 @@ export interface WindowState {
   isMaximized: boolean;
   zIndex: number;
   displayId: string;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
 }
 
 export interface Display {
@@ -54,7 +58,6 @@ interface OSStore {
   isAuthReady: boolean;
   isSetupComplete: boolean;
   user: User | null;
-  isLiteMode: boolean;
   wallpaper: string;
   accentColor: string;
   fontStyle: string;
@@ -112,7 +115,6 @@ interface OSStore {
   setAuthReady: (ready: boolean) => void;
   setUser: (user: User | null) => void;
   loginLocal: (username: string) => void;
-  setLiteMode: (enabled: boolean) => void;
   setWallpaper: (url: string) => void;
   setProfilePicture: (url: string) => void;
   setAccentColor: (color: string) => void;
@@ -125,6 +127,8 @@ interface OSStore {
   minimizeApp: (id: AppId) => void;
   maximizeApp: (id: AppId) => void;
   focusApp: (id: AppId) => void;
+  updateAppPosition: (id: AppId, x: number, y: number) => void;
+  resizeApp: (id: AppId, width: number, height: number, x?: number, y?: number) => void;
   
   // System Actions
   toggleGrayscale: () => void;
@@ -168,7 +172,6 @@ export const useOSStore = create<OSStore>((set, get) => {
     isAuthReady: false,
     isSetupComplete: savedSettings.isSetupComplete ?? false,
     user: savedSettings.user ?? null,
-    isLiteMode: savedSettings.isLiteMode ?? false,
     wallpaper: savedSettings.wallpaper ?? 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=2564&auto=format&fit=crop',
     accentColor: savedSettings.accentColor ?? '#3b82f6',
     fontStyle: savedSettings.fontStyle ?? 'sans',
@@ -249,7 +252,6 @@ export const useOSStore = create<OSStore>((set, get) => {
       const settings = {
         isSetupComplete: state.isSetupComplete,
         user: state.user,
-        isLiteMode: state.isLiteMode,
         wallpaper: state.wallpaper,
         accentColor: state.accentColor,
         fontStyle: state.fontStyle,
@@ -403,7 +405,7 @@ export const useOSStore = create<OSStore>((set, get) => {
       set({ taskbarPosition: pos });
       get().saveToLocal();
       const { user } = get();
-      if (user) {
+      if (user && !user.isLocal) {
         const path = `users/${user.uid}`;
         try {
           await updateDoc(doc(db, path), { taskbarPosition: pos });
@@ -421,7 +423,7 @@ export const useOSStore = create<OSStore>((set, get) => {
       
       set({ pinnedAppIds: newPinned });
       get().saveToLocal();
-      if (user) {
+      if (user && !user.isLocal) {
         const path = `users/${user.uid}`;
         try {
           await updateDoc(doc(db, path), { pinnedAppIds: newPinned });
@@ -439,7 +441,7 @@ export const useOSStore = create<OSStore>((set, get) => {
       
       set({ pinnedStartAppIds: newPinned });
       get().saveToLocal();
-      if (user) {
+      if (user && !user.isLocal) {
         const path = `users/${user.uid}`;
         try {
           await updateDoc(doc(db, path), { pinnedStartAppIds: newPinned });
@@ -469,41 +471,31 @@ export const useOSStore = create<OSStore>((set, get) => {
     factoryReset: async () => {
       const { user } = get();
       if (!user) return;
-      const path = `users/${user.uid}`;
+      
       localStorage.removeItem(STORAGE_KEY);
-      try {
-        await setDoc(doc(db, path), {
-          uid: user.uid,
-          email: user.email,
-          displayName: user.displayName,
-          isLiteMode: false,
-          isSetupComplete: false,
-          wallpaper: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=2564&auto=format&fit=crop',
-          accentColor: '#3b82f6',
-          fontStyle: 'sans',
-          taskbarPosition: 'bottom',
-          pinnedAppIds: ['explorer', 'browser', 'terminal', 'ai'],
-          createdAt: Timestamp.now()
-        });
-        set({ isBooted: false, isRestarting: true, isSetupComplete: false });
-        window.location.reload();
-      } catch (error) {
-        handleFirestoreError(error, OperationType.WRITE, path);
-      }
-    },
-
-    setLiteMode: async (enabled) => {
-      set({ isLiteMode: enabled });
-      get().saveToLocal();
-      const { user } = get();
-      if (user) {
+      
+      if (!user.isLocal) {
         const path = `users/${user.uid}`;
         try {
-          await updateDoc(doc(db, path), { isLiteMode: enabled });
+          await setDoc(doc(db, path), {
+            uid: user.uid,
+            email: user.email,
+            displayName: user.displayName,
+            isSetupComplete: false,
+            wallpaper: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=2564&auto=format&fit=crop',
+            accentColor: '#3b82f6',
+            fontStyle: 'sans',
+            taskbarPosition: 'bottom',
+            pinnedAppIds: ['explorer', 'browser', 'terminal', 'ai'],
+            createdAt: Timestamp.now()
+          });
         } catch (error) {
-          handleFirestoreError(error, OperationType.UPDATE, path);
+          handleFirestoreError(error, OperationType.WRITE, path);
         }
       }
+      
+      set({ isBooted: false, isRestarting: true, isSetupComplete: false });
+      window.location.reload();
     },
 
     setWallpaper: async (url) => {
@@ -547,7 +539,7 @@ export const useOSStore = create<OSStore>((set, get) => {
       set({ accentColor: color });
       get().saveToLocal();
       const { user } = get();
-      if (user) {
+      if (user && !user.isLocal) {
         const path = `users/${user.uid}`;
         try {
           await updateDoc(doc(db, path), { accentColor: color });
@@ -561,7 +553,7 @@ export const useOSStore = create<OSStore>((set, get) => {
       set({ fontStyle: font });
       get().saveToLocal();
       const { user } = get();
-      if (user) {
+      if (user && !user.isLocal) {
         const path = `users/${user.uid}`;
         try {
           await updateDoc(doc(db, path), { fontStyle: font });
@@ -573,7 +565,7 @@ export const useOSStore = create<OSStore>((set, get) => {
 
     syncSettings: async () => {
       const { user } = get();
-      if (!user) return;
+      if (!user || user.isLocal) return;
 
       const path = `users/${user.uid}`;
       try {
@@ -581,7 +573,6 @@ export const useOSStore = create<OSStore>((set, get) => {
         if (userDoc.exists()) {
           const data = userDoc.data();
           set({ 
-            isLiteMode: data.isLiteMode ?? false,
             isSetupComplete: data.isSetupComplete ?? false,
             wallpaper: data.wallpaper ?? 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=2564&auto=format&fit=crop',
             accentColor: data.accentColor ?? '#3b82f6',
@@ -597,7 +588,6 @@ export const useOSStore = create<OSStore>((set, get) => {
             uid: user.uid,
             email: user.email,
             displayName: user.displayName,
-            isLiteMode: false,
             isSetupComplete: false,
             wallpaper: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=2564&auto=format&fit=crop',
             accentColor: '#3b82f6',
@@ -638,6 +628,13 @@ export const useOSStore = create<OSStore>((set, get) => {
           processes: newProcesses
         };
       }
+
+      // Default centered position
+      const defaultWidth = 800;
+      const defaultHeight = 500;
+      const x = (typeof window !== 'undefined' ? (window.innerWidth - defaultWidth) / 2 : 100) + (state.windows.length * 20);
+      const y = (typeof window !== 'undefined' ? (window.innerHeight - defaultHeight) / 2 : 100) + (state.windows.length * 20);
+
       const newWindow: WindowState = {
         id,
         title,
@@ -645,7 +642,11 @@ export const useOSStore = create<OSStore>((set, get) => {
         isMinimized: false,
         isMaximized: false,
         zIndex: state.windows.length + 10,
-        displayId: state.currentDisplayId
+        displayId: state.currentDisplayId,
+        x,
+        y,
+        width: defaultWidth,
+        height: defaultHeight
       };
       return { 
         windows: [...state.windows, newWindow],
@@ -675,6 +676,18 @@ export const useOSStore = create<OSStore>((set, get) => {
         windows: state.windows.map(w => w.id === id ? { ...w, zIndex: maxZ + 1, isMinimized: false } : w),
         activeWindowId: id
       };
-    })
+    }),
+    updateAppPosition: (id, x, y) => set((state) => ({
+      windows: state.windows.map(w => w.id === id ? { ...w, x, y } : w)
+    })),
+    resizeApp: (id, width, height, x, y) => set((state) => ({
+      windows: state.windows.map(w => w.id === id ? { 
+        ...w, 
+        width, 
+        height,
+        ...(x !== undefined ? { x } : {}),
+        ...(y !== undefined ? { y } : {})
+      } : w)
+    }))
   };
 });

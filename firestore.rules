@@ -8,7 +8,6 @@
 //   - uid: string (required) - User's unique identifier
 //   - displayName: string (optional) - User's public name
 //   - email: string (required) - User's email address
-//   - isLiteMode: bool (optional) - Performance mode preference
 //   - wallpaper: string (optional) - Desktop wallpaper URL
 //   - createdAt: timestamp (optional) - Account creation time
 //
@@ -73,7 +72,6 @@ service cloud.firestore {
              data.uid is string && data.uid.size() > 0 &&
              data.email is string && isValidEmail(data.email) &&
              (!('displayName' in data) || (data.displayName is string && data.displayName.size() < 100)) &&
-             (!('isLiteMode' in data) || data.isLiteMode is bool) &&
              (!('wallpaper' in data) || isValidUrl(data.wallpaper)) &&
              (!('createdAt' in data) || data.createdAt is timestamp);
     }

@@ -44,7 +44,7 @@ import QuickSettings from './QuickSettings';
 
 const Taskbar: React.FC = () => {
   const { 
-    windows, openApp, focusApp, activeWindowId, isLiteMode, 
+    windows, openApp, focusApp, activeWindowId, 
     toggleQuickSettings, isQuickSettingsOpen,
     taskbarPosition, setTaskbarPosition, pinnedAppIds, togglePinApp,
     user, toggleWidgets, toggleChat, isWidgetsOpen, isChatOpen,
@@ -177,6 +177,18 @@ const Taskbar: React.FC = () => {
             Rotate Taskbar
           </button>
 
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              openApp('process-manager', 'System Monitor');
+              setContextMenu(null);
+            }}
+            className="w-full text-left px-3 py-2 rounded-lg text-xs hover:bg-white/10 text-gray-300 flex items-center gap-2 transition-colors mt-1"
+          >
+            <Activity size={14} />
+            Task Manager
+          </button>
+
           {contextMenu.appId && pinnedAppIds.includes(contextMenu.appId) && (
             <button
               onClick={(e) => {
@@ -199,9 +211,9 @@ const Taskbar: React.FC = () => {
         onMouseLeave={() => setIsHovered(false)}
         className={`fixed z-[2000] flex items-center justify-between p-2 transition-all duration-300 taskbar-${taskbarPosition} ${isHidden ? 'taskbar-hidden' : ''}`}
         style={{ 
-          backgroundColor: isLiteMode ? '#111' : `rgba(10, 10, 10, ${taskbarTransparency / 100})`,
-          backdropFilter: isLiteMode ? 'none' : 'blur(12px)',
-          border: isLiteMode ? '1px solid #333' : '1px solid rgba(255, 255, 255, 0.1)',
+          backgroundColor: `rgba(10, 10, 10, ${taskbarTransparency / 100})`,
+          backdropFilter: 'blur(12px)',
+          border: '1px solid rgba(255, 255, 255, 0.1)',
           transform: isHidden ? (
             taskbarPosition === 'bottom' ? 'translateY(calc(100% - 2px))' :
             taskbarPosition === 'top' ? 'translateY(calc(-100% + 2px))' :

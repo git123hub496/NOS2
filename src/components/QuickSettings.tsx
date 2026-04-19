@@ -21,7 +21,6 @@ const QuickSettings: React.FC = () => {
     isQuickSettingsOpen, toggleQuickSettings, 
     isGrayscale, toggleGrayscale, 
     isInverted, toggleInvert,
-    isLiteMode, setLiteMode,
     restart,
     processes,
     totalMemory,
@@ -36,7 +35,6 @@ const QuickSettings: React.FC = () => {
   const toggles = [
     { id: 'grayscale', label: 'Grayscale', icon: <Eye size={20} />, active: isGrayscale, action: toggleGrayscale },
     { id: 'invert', label: 'Invert', icon: <Monitor size={20} />, active: isInverted, action: toggleInvert },
-    { id: 'lite', label: 'Lite Mode', icon: <Zap size={20} />, active: isLiteMode, action: () => setLiteMode(!isLiteMode) },
     { id: 'dark', label: 'Light Mode', icon: <Sun size={20} />, active: !isDarkMode, action: () => setDarkMode(!isDarkMode) },
     { id: 'display', label: 'Add Display', icon: <Monitor size={20} />, active: false, action: () => window.open(window.location.href, '_blank') },
   ];
