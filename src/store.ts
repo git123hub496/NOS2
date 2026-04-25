@@ -199,7 +199,7 @@ export const useOSStore = create<OSStore>((set, get) => {
     isRestarting: false,
     isShutDown: false,
     searchQuery: '',
-    browserUrl: 'https://www.google.com/search?igu=1',
+    browserUrl: 'https://nebula-search.vercel.app/',
 
     volume: savedSettings.volume ?? 80,
     selectedNetwork: 'Nebula_5G',

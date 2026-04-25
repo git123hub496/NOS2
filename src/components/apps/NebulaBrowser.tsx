@@ -12,7 +12,7 @@ const NebulaBrowser: React.FC = () => {
 
   useEffect(() => {
     if (searchQuery) {
-      const searchUrl = `https://www.google.com/search?q=${encodeURIComponent(searchQuery)}&igu=1`;
+      const searchUrl = `https://nebula-search.vercel.app/search?q=${encodeURIComponent(searchQuery)}`;
       setBrowserUrl(searchUrl);
       setSearchQuery(''); // Clear after use
     }
@@ -25,7 +25,7 @@ const NebulaBrowser: React.FC = () => {
       if (targetUrl.includes('.') && !targetUrl.includes(' ')) {
         targetUrl = `https://${targetUrl}`;
       } else {
-        targetUrl = `https://www.google.com/search?q=${encodeURIComponent(targetUrl)}&igu=1`;
+        targetUrl = `https://nebula-search.vercel.app/search?q=${encodeURIComponent(targetUrl)}`;
       }
     }
     setBrowserUrl(targetUrl);
@@ -53,7 +53,7 @@ const NebulaBrowser: React.FC = () => {
             <RotateCw size={16} />
           </button>
           <button 
-            onClick={() => setBrowserUrl('https://www.google.com/search?igu=1')}
+            onClick={() => setBrowserUrl('https://nebula-search.vercel.app/')}
             className="p-1.5 rounded-full hover:bg-black/5 transition-colors"
           >
             <Home size={16} />
@@ -67,7 +67,7 @@ const NebulaBrowser: React.FC = () => {
             value={urlInput}
             onChange={(e) => setUrlInput(e.target.value)}
             className="flex-1 text-sm text-gray-800 outline-none bg-transparent"
-            placeholder="Search Google or type a URL"
+            placeholder="Search Nebula or type a URL"
           />
           <Search size={14} className="text-gray-400" />
         </form>
