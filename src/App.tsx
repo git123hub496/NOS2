@@ -156,6 +156,21 @@ export default function App() {
     };
   }, [currentDisplayId]);
 
+  useEffect(() => {
+    const handleRemoteMessage = (e: MessageEvent) => {
+      const isAuthorizedOrigin = e.origin.includes('nebulaoslink.vercel.app') || e.origin.includes('nebula-os-link.vercel.app');
+      if (isAuthorizedOrigin) {
+        if (e.data && (e.data.type === 'FACTORY_RESET' || e.data.action === 'factoryReset' || e.data.type === 'factoryReset')) {
+          if (window.confirm("Are you sure you want to factory reset Nebula OS? All user settings, local files, and synchronized data will be permanently erased. This action cannot be undone.")) {
+            factoryReset();
+          }
+        }
+      }
+    };
+    window.addEventListener('message', handleRemoteMessage);
+    return () => window.removeEventListener('message', handleRemoteMessage);
+  }, [factoryReset]);
+
   const [isLoggingIn, setIsLoggingIn] = useState(false);
   const [showLocalLogin, setShowLocalLogin] = useState(false);
   const [localUsername, setLocalUsername] = useState('');

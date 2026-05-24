@@ -21,7 +21,8 @@ import {
   Moon,
   Sun,
   Check,
-  Plus
+  Plus,
+  ExternalLink
 } from 'lucide-react';
 
 const Settings: React.FC = () => {
@@ -601,6 +602,37 @@ const Settings: React.FC = () => {
                     <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Storage</p>
                     <p className="text-sm font-medium">1TB Cloud SSD</p>
                   </div>
+                </div>
+              </div>
+
+              {/* Ecosystem Reset Link */}
+              <div className="bg-white/5 rounded-3xl p-8 border border-white/5 space-y-6">
+                <div className="space-y-1">
+                  <h3 className="text-sm font-bold">Ecosystem Recovery</h3>
+                  <p className="text-xs text-gray-400">Manage and partition systems remotely via direct pairing links.</p>
+                </div>
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-2xl bg-[#090d16] border border-white/10">
+                  <div className="space-y-0.5">
+                    <p className="text-xs font-semibold text-gray-100 flex items-center gap-1.5">
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                      Ecosystem Link Ready
+                    </p>
+                    <p className="text-[10px] text-gray-500 font-mono">nebulaoslink.vercel.app</p>
+                  </div>
+                  <button
+                    onClick={() => {
+                      const targetUrl = `https://nebulaoslink.vercel.app/?accent=${encodeURIComponent(accentColor)}&theme=${isDarkMode ? 'dark' : 'light'}`;
+                      window.open(targetUrl, '_blank', 'noopener,noreferrer');
+                    }}
+                    className="flex items-center justify-center gap-2 px-5 py-3 text-xs font-bold text-gray-950 rounded-xl transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] cursor-pointer"
+                    style={{
+                      backgroundColor: 'var(--os-accent)',
+                      boxShadow: '0 8px 16px -4px var(--os-accent)'
+                    }}
+                  >
+                    <span>factory reset to Nebula OS link</span>
+                    <ExternalLink size={14} />
+                  </button>
                 </div>
               </div>
             </section>
