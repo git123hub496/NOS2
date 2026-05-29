@@ -69,7 +69,7 @@ const Desktop: React.FC = () => {
   const { 
     wallpaper, openApp, closeApp, user,
     isWidgetsOpen, isChatOpen, toggleWidgets, toggleChat,
-    accentColor, setSearchQuery, activeWindowId
+    accentColor, setSearchQuery, activeWindowId, windows
   } = useOSStore();
 
   const [contextMenu, setContextMenu] = useState<{ x: number, y: number } | null>(null);
@@ -130,6 +130,578 @@ const Desktop: React.FC = () => {
     if (x + menuWidth > window.innerWidth) x -= menuWidth;
     if (y + menuHeight > window.innerHeight) y -= menuHeight;
     setContextMenu({ x, y });
+  };
+
+  const getAppContent = (appId: string, windowId: string) => {
+    switch (appId) {
+      case 'settings':
+        return <Settings />;
+      case 'terminal':
+        return <Terminal />;
+      case 'ai':
+        return <AI />;
+      case 'explorer':
+        return <Explorer />;
+      case 'docs':
+        return <NebulaDocs />;
+      case 'slides':
+        return <NebulaSlides />;
+      case 'process-manager':
+        return <ProcessManager />;
+      case 'browser':
+        return <NebulaBrowser />;
+      case 'quadrais-ai':
+        return <QuadraisAI />;
+      case 'search':
+        return (
+          <div className="h-full flex flex-col bg-[#0a0a0a] p-8 items-center justify-center font-sans">
+            <div className="mb-8 text-center">
+              <h2 className="text-4xl font-display font-black text-white mb-2">NEBULA</h2>
+              <p className="text-xs text-blue-500 uppercase tracking-widest font-bold">Search the Void</p>
+            </div>
+            <div className="w-full max-w-lg relative group">
+              <SearchIcon size={20} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 group-focus-within:text-blue-500 transition-colors" />
+              <input 
+                className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 pl-12 pr-6 text-white outline-none focus:border-blue-500/50 transition-all shadow-2xl"
+                placeholder="Search anything..."
+                autoFocus
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    const query = e.currentTarget.value;
+                    if (query.trim()) {
+                      setSearchQuery(query);
+                      closeApp(windowId);
+                      openApp('browser', 'Nebula Browser');
+                    }
+                  }
+                }}
+              />
+            </div>
+            <div className="mt-8 flex gap-4">
+              <button 
+                onClick={() => {
+                  setSearchQuery('Nebula OS latest updates');
+                  closeApp(windowId);
+                  openApp('browser', 'Nebula Browser');
+                }}
+                className="px-6 py-2 rounded-full bg-white/5 border border-white/10 text-xs text-gray-400 hover:bg-white/10 transition-colors"
+              >
+                Trending
+              </button>
+              <button className="px-6 py-2 rounded-full bg-white/5 border border-white/10 text-xs text-gray-400 hover:bg-white/10 transition-colors">History</button>
+              <button className="px-6 py-2 rounded-full bg-white/5 border border-white/10 text-xs text-gray-400 hover:bg-white/10 transition-colors">Safe Search</button>
+            </div>
+          </div>
+        );
+      case 'store':
+        return (
+          <div className="h-full flex flex-col bg-[#050505] font-sans">
+            <div className="p-6 border-b border-white/5 flex items-center justify-between">
+              <h2 className="text-xl font-bold text-white">App Store</h2>
+              <div className="flex gap-2">
+                <button className="px-4 py-1.5 rounded-full bg-blue-600 text-white text-xs font-bold">Featured</button>
+                <button className="px-4 py-1.5 rounded-full bg-white/5 text-gray-400 text-xs font-bold">Games</button>
+                <button className="px-4 py-1.5 rounded-full bg-white/5 text-gray-400 text-xs font-bold">Apps</button>
+              </div>
+            </div>
+            <div className="flex-1 p-6 overflow-auto grid grid-cols-2 gap-4">
+              <div className="bg-white/5 border border-white/10 rounded-2xl p-4 flex gap-4 hover:bg-white/10 transition-all cursor-pointer group">
+                <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-purple-500 to-indigo-600 flex items-center justify-center shadow-lg group-hover:scale-105 transition-transform">
+                  <Sparkles size={32} className="text-white" />
+                </div>
+                <div className="flex-1">
+                  <h3 className="text-sm font-bold text-white">Quadrais AI</h3>
+                  <p className="text-[10px] text-gray-500 mt-1">AI Assistant • 5.0 ★</p>
+                  <button 
+                    onClick={() => {
+                      openApp('quadrais-ai', 'Quadrais AI');
+                      const { pinnedStartAppIds, togglePinStartApp } = useOSStore.getState();
+                      if (!pinnedStartAppIds.includes('quadrais-ai')) {
+                        togglePinStartApp('quadrais-ai');
+                      }
+                    }}
+                    className="mt-2 px-4 py-1 bg-white/10 rounded-full text-[10px] font-bold text-blue-400 hover:bg-blue-500 hover:text-white transition-all"
+                  >
+                    GET
+                  </button>
+                </div>
+              </div>
+              {[1,2,3,4,5].map(i => (
+                <div key={i} className="bg-white/5 border border-white/10 rounded-2xl p-4 flex gap-4 hover:bg-white/10 transition-all cursor-pointer group">
+                  <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center shadow-lg group-hover:scale-105 transition-transform">
+                    <Sparkles size={32} className="text-white" />
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="text-sm font-bold text-white">Nebula App {i}</h3>
+                    <p className="text-[10px] text-gray-500 mt-1">Productivity • 4.8 ★</p>
+                    <button className="mt-2 px-4 py-1 bg-white/10 rounded-full text-[10px] font-bold text-blue-400 hover:bg-blue-500 hover:text-white transition-all">GET</button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        );
+      case 'pay':
+        return (
+          <div className="h-full flex flex-col bg-[#0a0a0a] p-6 font-sans">
+            <div className="mb-8">
+              <h2 className="text-2xl font-bold text-white mb-1">Nebula Pay</h2>
+              <p className="text-xs text-gray-500">Manage your digital assets</p>
+            </div>
+            <div className="bg-gradient-to-br from-indigo-600 to-blue-700 rounded-3xl p-6 shadow-2xl mb-8 relative overflow-hidden group">
+              <div className="absolute top-[-20%] right-[-10%] w-48 h-48 bg-white/10 blur-[60px] rounded-full group-hover:scale-150 transition-transform duration-1000" />
+              <div className="relative z-10">
+                <div className="flex justify-between items-start mb-12">
+                  <CreditCard size={32} className="text-white/80" />
+                  <span className="text-xs font-mono text-white/60 tracking-widest">NEBULA PLATINUM</span>
+                </div>
+                <div className="mb-8">
+                  <p className="text-[10px] text-white/40 uppercase tracking-widest mb-1">Balance</p>
+                  <h3 className="text-3xl font-mono font-bold text-white">$12,450.00</h3>
+                </div>
+                <div className="flex justify-between items-end">
+                  <div>
+                    <p className="text-[10px] text-white/40 uppercase tracking-widest mb-1">Card Holder</p>
+                    <p className="text-sm font-bold text-white uppercase">{user?.displayName || 'Nebula User'}</p>
+                  </div>
+                  <p className="text-sm font-mono text-white/80">**** 4589</p>
+                </div>
+              </div>
+            </div>
+            <div className="space-y-4">
+              <h3 className="text-xs font-bold text-gray-500 uppercase tracking-widest">Recent Transactions</h3>
+              {[1,2,3].map(i => (
+                <div key={i} className="flex items-center justify-between p-4 rounded-2xl bg-white/5 border border-white/10">
+                  <div className="flex items-center gap-3">
+                    <div 
+                      className="w-10 h-10 rounded-full flex items-center justify-center"
+                      style={{ backgroundColor: 'var(--os-accent-glow)' }}
+                    >
+                      <ShoppingBag size={18} style={{ color: 'var(--os-accent)' }} />
+                    </div>
+                    <div>
+                      <p className="text-sm font-bold text-white">Nebula Store Purchase</p>
+                      <p className="text-[10px] text-gray-500">Mar 24, 2026</p>
+                    </div>
+                  </div>
+                  <span className="text-sm font-mono font-bold text-red-400">-$24.99</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        );
+      case 'health':
+        return (
+          <div className="h-full flex flex-col bg-[#050505] p-6 font-sans">
+            <div className="flex justify-between items-center mb-8">
+              <h2 className="text-2xl font-bold text-white">Health</h2>
+              <div 
+                className="w-10 h-10 rounded-full flex items-center justify-center"
+                style={{ backgroundColor: 'var(--os-accent-glow)' }}
+              >
+                <Heart size={20} className="animate-pulse" style={{ color: 'var(--os-accent)' }} />
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-4 mb-8">
+              <div className="bg-white/5 border border-white/10 rounded-3xl p-6">
+                <p className="text-[10px] text-gray-500 uppercase tracking-widest mb-2">Heart Rate</p>
+                <div className="flex items-baseline gap-2">
+                  <h3 className="text-3xl font-bold text-white">72</h3>
+                  <span className="text-xs font-bold" style={{ color: 'var(--os-accent)' }}>BPM</span>
+                </div>
+                <div className="mt-4 h-12 flex items-end gap-1">
+                  {[4,6,3,8,5,7,4,6,5,8].map((h, i) => (
+                    <div 
+                      key={i} 
+                      className="flex-1 rounded-t-sm" 
+                      style={{ height: `${h * 10}%`, backgroundColor: 'var(--os-accent-glow)' }} 
+                    />
+                  ))}
+                </div>
+              </div>
+              <div className="bg-white/5 border border-white/10 rounded-3xl p-6">
+                <p className="text-[10px] text-gray-500 uppercase tracking-widest mb-2">Sleep</p>
+                <div className="flex items-baseline gap-2">
+                  <h3 className="text-3xl font-bold text-white">7.5</h3>
+                  <span className="text-xs font-bold" style={{ color: 'var(--os-accent)' }}>HRS</span>
+                </div>
+                <div className="mt-4 h-12 flex items-end gap-1">
+                  {[3,5,7,8,6,4,5,7,8,6].map((h, i) => (
+                    <div 
+                      key={i} 
+                      className="flex-1 rounded-t-sm" 
+                      style={{ height: `${h * 10}%`, backgroundColor: 'var(--os-accent-glow)' }} 
+                    />
+                  ))}
+                </div>
+              </div>
+            </div>
+            <div 
+              className="border rounded-3xl p-6"
+              style={{ 
+                background: 'linear-gradient(to bottom right, var(--os-accent-glow), transparent)',
+                borderColor: 'var(--os-accent-border)'
+              }}
+            >
+              <h3 className="text-sm font-bold text-white mb-4">Daily Activity</h3>
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <div className="flex justify-between text-[10px] uppercase font-bold">
+                    <span className="text-gray-400">Move</span>
+                    <span style={{ color: 'var(--os-accent)' }}>450 / 600 KCAL</span>
+                  </div>
+                  <div className="h-2 bg-white/5 rounded-full overflow-hidden">
+                    <div className="h-full w-[75%]" style={{ backgroundColor: 'var(--os-accent)' }} />
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <div className="flex justify-between text-[10px] uppercase font-bold">
+                    <span className="text-gray-400">Exercise</span>
+                    <span style={{ color: 'var(--os-accent)' }}>22 / 30 MIN</span>
+                  </div>
+                  <div className="h-2 bg-white/5 rounded-full overflow-hidden">
+                    <div className="h-full w-[73%]" style={{ backgroundColor: 'var(--os-accent)' }} />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+      case 'phone':
+        return <Phone />;
+      case 'notepad':
+        return (
+          <textarea 
+            className="w-full h-full bg-white text-black p-4 outline-none resize-none font-sans"
+            placeholder="Start typing..."
+          />
+        );
+      case 'recycle-bin':
+        return (
+          <div className="h-full bg-[#0a0a0a] p-8 flex flex-col items-center justify-center text-gray-500 font-sans">
+            <Trash2 className="mb-4 opacity-20" size={64} style={{ color: 'var(--os-accent)' }} />
+            <p className="text-sm">Your recycle bin is empty</p>
+          </div>
+        );
+      case 'mail':
+        return (
+          <div className="h-full flex flex-col bg-[#050505] font-sans">
+            <div className="p-6 border-b border-white/5 flex items-center justify-between">
+              <h2 className="text-xl font-bold text-white">NebulaMail</h2>
+              <button className="px-4 py-1.5 rounded-full bg-blue-600 text-white text-xs font-bold">Compose</button>
+            </div>
+            <div className="flex-1 p-6 flex items-center justify-center text-gray-500">
+              <div className="text-center">
+                <Mail size={48} className="mx-auto mb-4 opacity-20" />
+                <p className="text-sm">No new messages</p>
+              </div>
+            </div>
+          </div>
+        );
+      case 'maps':
+        return <Maps />;
+      case 'calendar':
+        return (
+          <div className="h-full bg-[#050505] p-8 font-sans">
+            <div className="flex justify-between items-center mb-8">
+              <h2 className="text-2xl font-bold text-white">{new Date().toLocaleDateString([], { month: 'long', year: 'numeric' })}</h2>
+              <div className="flex gap-2">
+                <button className="p-2 rounded-lg bg-white/5 hover:bg-white/10 text-white transition-colors">
+                  <Clock size={16} />
+                </button>
+              </div>
+            </div>
+            <div className="grid grid-cols-7 gap-2">
+              {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((d, i) => (
+                <div key={`${d}-${i}`} className="text-center text-[10px] font-bold text-gray-500 uppercase py-2">{d}</div>
+              ))}
+              {Array.from({ length: 31 }).map((_, i) => (
+                <div key={i} className={`aspect-square flex items-center justify-center rounded-xl text-xs ${i + 1 === new Date().getDate() ? 'bg-blue-600 text-white font-bold' : 'text-gray-400 hover:bg-white/5'}`}>
+                  {i + 1}
+                </div>
+              ))}
+            </div>
+          </div>
+        );
+      case 'calculator':
+        return <Calculator />;
+      case 'shop':
+        return (
+          <div className="h-full flex flex-col bg-[#050505] font-sans">
+            <div className="p-8 border-b border-white/5">
+              <h2 className="text-3xl font-black text-white mb-2">SHOP</h2>
+              <p className="text-xs text-blue-500 uppercase tracking-widest font-bold">Official Nebulabs Hardware</p>
+            </div>
+            <div className="flex-1 p-8 overflow-auto grid grid-cols-2 gap-6">
+              {[
+                { name: 'Nebula Phone 15', price: '$999', color: 'from-purple-600 to-blue-600' },
+                { name: 'Nebula Pad Pro', price: '$799', color: 'from-blue-600 to-cyan-600' },
+                { name: 'Nebula Watch', price: '$399', color: 'from-orange-600 to-red-600' },
+                { name: 'Nebula Buds', price: '$199', color: 'from-green-600 to-teal-600' }
+              ].map((item, i) => (
+                <div key={i} className="bg-white/5 border border-white/10 rounded-3xl p-6 hover:bg-white/10 transition-all cursor-pointer group">
+                  <div className={`w-full aspect-square rounded-2xl bg-gradient-to-br ${item.color} mb-4 flex items-center justify-center shadow-2xl group-hover:scale-105 transition-transform`}>
+                    <ShoppingBag size={48} className="text-white/20" />
+                  </div>
+                  <h3 className="text-sm font-bold text-white">{item.name}</h3>
+                  <p className="text-xs text-blue-400 font-mono mt-1">{item.price}</p>
+                  <button className="mt-4 w-full py-2 bg-white/10 rounded-xl text-[10px] font-bold text-white hover:bg-blue-600 transition-all">PRE-ORDER</button>
+                </div>
+              ))}
+            </div>
+          </div>
+        );
+      case 'themes':
+        return (
+          <div className="h-full bg-[#050505] p-8 overflow-auto font-sans">
+            <h2 className="text-3xl font-black text-white mb-8">THEMES</h2>
+            <div className="grid grid-cols-2 gap-4">
+              {[
+                { name: 'Nebula Default', color: 'bg-blue-600', active: true },
+                { name: 'Solar Flare', color: 'bg-orange-600', active: false },
+                { name: 'Deep Space', color: 'bg-purple-900', active: false },
+                { name: 'Emerald City', color: 'bg-green-600', active: false },
+                { name: 'Midnight', color: 'bg-gray-900', active: false },
+                { name: 'Rose Gold', color: 'bg-pink-400', active: false },
+              ].map(theme => (
+                <div key={theme.name} className="p-6 rounded-3xl bg-white/5 border border-white/10 flex flex-col items-center gap-4 hover:bg-white/10 transition-colors cursor-pointer group">
+                  <div className={`w-20 h-20 rounded-full ${theme.color} shadow-2xl group-hover:scale-110 transition-transform`} />
+                  <span className="text-xs font-bold text-white">{theme.name}</span>
+                  {theme.active && <span className="text-[10px] text-blue-500 font-bold uppercase">Active</span>}
+                </div>
+              ))}
+            </div>
+          </div>
+        );
+      case 'games':
+        return (
+          <div className="h-full bg-[#0a0a0a] p-8 overflow-auto font-sans">
+            <h2 className="text-3xl font-black text-white mb-8 flex items-center gap-4">
+              <Gamepad2 size={32} className="text-indigo-400" />
+              GAMES
+            </h2>
+            <div className="grid grid-cols-2 gap-6">
+              {[
+                { name: 'Nebula Racer', icon: <Car />, color: 'bg-red-600' },
+                { name: 'Space Invaders', icon: <Sparkles />, color: 'bg-green-600' },
+                { name: 'Minesweeper', icon: <Bomb />, color: 'bg-gray-600' },
+                { name: 'Nebula Quest', icon: <Map />, color: 'bg-blue-600' },
+              ].map(game => (
+                <div key={game.name} className="p-6 rounded-3xl bg-white/5 border border-white/10 flex flex-col items-center gap-4 hover:bg-white/10 transition-colors cursor-pointer group">
+                  <div className={`w-16 h-16 rounded-2xl ${game.color} flex items-center justify-center text-white shadow-xl group-hover:scale-110 transition-transform`}>
+                    {game.icon}
+                  </div>
+                  <span className="text-xs font-bold text-white">{game.name}</span>
+                  <button className="mt-2 px-6 py-2 rounded-full bg-white/10 text-[10px] font-bold uppercase tracking-widest hover:bg-white/20 transition-colors">Play Now</button>
+                </div>
+              ))}
+            </div>
+          </div>
+        );
+      case 'minesweeper':
+        return (
+          <div className="h-full bg-[#1a1a1a] flex flex-col items-center justify-center p-8 font-sans">
+            <div className="mb-8 flex items-center gap-8 bg-black/40 p-4 rounded-2xl border border-white/5">
+              <div className="text-center">
+                <p className="text-[10px] text-gray-500 uppercase font-bold">Mines</p>
+                <p className="text-2xl font-mono text-red-500">010</p>
+              </div>
+              <button className="w-12 h-12 rounded-xl bg-yellow-500 flex items-center justify-center text-2xl">😊</button>
+              <div className="text-center">
+                <p className="text-[10px] text-gray-500 uppercase font-bold">Time</p>
+                <p className="text-2xl font-mono text-red-500">000</p>
+              </div>
+            </div>
+            <div className="grid grid-cols-9 gap-1 p-2 bg-gray-800 rounded-lg shadow-2xl border-4 border-gray-700">
+              {Array.from({ length: 81 }).map((_, i) => (
+                <button key={i} className="w-8 h-8 bg-gray-400 border-2 border-t-gray-200 border-l-gray-200 border-b-gray-600 border-r-gray-600 active:border-none" />
+              ))}
+            </div>
+          </div>
+        );
+      case 'update':
+        return (
+          <div className="h-full bg-[#050505] p-12 flex flex-col items-center justify-center text-center font-sans">
+            <div className="relative mb-12">
+              <RefreshCw size={80} className="text-blue-500 animate-[spin_3s_linear_infinite]" />
+              <div className="absolute inset-0 flex items-center justify-center">
+                <span className="text-xs font-bold text-white">OS</span>
+              </div>
+            </div>
+            <h2 className="text-3xl font-black text-white mb-4">NEBULA OS 2.5</h2>
+            <p className="text-gray-500 text-sm max-w-md mb-8">Your system is up to date. Last checked: Today at 14:20</p>
+            <button 
+              className="px-8 py-3 rounded-full text-white font-bold transition-colors shadow-lg"
+              style={{ backgroundColor: 'var(--os-accent)', boxShadow: '0 10px 15px -3px var(--os-accent-glow)' }}
+            >
+              Check for Updates
+            </button>
+          </div>
+        );
+      case 'chat':
+        return <Chat />;
+      case 'info':
+        return (
+          <div className="h-full bg-[#050505] p-12 overflow-auto font-sans">
+            <div className="flex items-center gap-8 mb-12">
+              <div 
+                className="w-32 h-32 rounded-3xl flex items-center justify-center text-white text-6xl font-black shadow-2xl"
+                style={{ backgroundColor: 'var(--os-accent)' }}
+              >
+                N
+              </div>
+              <div>
+                <h2 className="text-4xl font-black text-white mb-2">NEBULA OS</h2>
+                <p className="font-bold uppercase tracking-widest" style={{ color: 'var(--os-accent)' }}>Version 2.5.0 Professional</p>
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-8">
+              <div className="space-y-6">
+                <h3 className="text-xs font-bold text-gray-500 uppercase tracking-widest">Hardware</h3>
+                <div className="space-y-4">
+                  {[
+                    { label: 'Processor', value: 'Nebula Quantum X1 @ 4.2GHz' },
+                    { label: 'Memory', value: '64GB LPDDR6X' },
+                    { label: 'Storage', value: '2TB NVMe Gen 5 SSD' },
+                    { label: 'Graphics', value: 'Nebula Core RT-4000' },
+                  ].map(item => (
+                    <div key={item.label}>
+                      <p className="text-[10px] text-gray-600 uppercase font-bold">{item.label}</p>
+                      <p className="text-sm text-gray-300">{item.value}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              <div className="space-y-6">
+                <h3 className="text-xs font-bold text-gray-500 uppercase tracking-widest">Software</h3>
+                <div className="space-y-4">
+                  {[
+                    { label: 'Kernel', value: 'Nebula-X 6.4.2-stable' },
+                    { label: 'Shell', value: 'Nebula-ZSH 5.9' },
+                    { label: 'Environment', value: 'Nebula Desktop 2.0' },
+                    { label: 'Build', value: '2026.03.24.release' },
+                  ].map(item => (
+                    <div key={item.label}>
+                      <p className="text-[10px] text-gray-600 uppercase font-bold">{item.label}</p>
+                      <p className="text-sm text-gray-300">{item.value}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+      case 'camera':
+        return (
+          <div className="h-full bg-black flex flex-col items-center justify-center relative group font-sans">
+            <Camera size={80} className="text-white/10" />
+            <div className="absolute inset-0 flex items-center justify-center">
+              <p className="text-xs text-gray-600 uppercase tracking-widest font-bold">Camera is starting...</p>
+            </div>
+            <div className="absolute bottom-8 flex items-center gap-8 opacity-0 group-hover:opacity-100 transition-opacity">
+              <button className="w-12 h-12 rounded-full bg-white/10 flex items-center justify-center text-white hover:bg-white/20 transition-colors">
+                <Tv size={20} />
+              </button>
+              <button className="w-16 h-16 rounded-full bg-white flex items-center justify-center text-black hover:scale-105 transition-transform shadow-2xl" />
+              <button className="w-12 h-12 rounded-full bg-white/10 flex items-center justify-center text-white hover:bg-white/20 transition-colors">
+                <RefreshCw size={20} />
+              </button>
+            </div>
+          </div>
+        );
+      case 'tv':
+        return (
+          <div className="h-full bg-black flex flex-col font-sans">
+            <div className="flex-1 flex items-center justify-center relative group">
+              <Tv size={120} className="text-white/5" />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent flex flex-col justify-end p-12 opacity-0 group-hover:opacity-100 transition-opacity">
+                <h2 className="text-4xl font-black text-white mb-2">NEBULA ORIGINALS</h2>
+                <p className="text-sm text-gray-400 max-w-xl mb-8">Experience the future of entertainment with high-fidelity streaming and exclusive content only on Nebula TV.</p>
+                <button 
+                  className="w-fit px-12 py-4 rounded-full text-black font-bold hover:scale-105 transition-transform"
+                  style={{ backgroundColor: 'white' }}
+                >
+                  Watch Now
+                </button>
+              </div>
+            </div>
+            <div className="h-32 bg-[#050505] p-6 flex items-center gap-6 overflow-x-auto custom-scrollbar">
+              {Array.from({ length: 6 }).map((_, i) => (
+                <div key={i} className="flex-shrink-0 w-48 h-full rounded-xl bg-white/5 border border-white/10 animate-pulse" />
+              ))}
+            </div>
+          </div>
+        );
+      case 'sticky-notes':
+        return (
+          <div className="h-full bg-yellow-400 p-8 shadow-inner font-sans">
+            <textarea 
+              className="w-full h-full bg-transparent text-yellow-900 font-serif text-xl outline-none resize-none placeholder:text-yellow-800/40"
+              placeholder="Write a note..."
+              defaultValue="Don't forget to update the Nebula OS kernel tonight!"
+            />
+          </div>
+        );
+      case 'fonts':
+        return (
+          <div className="h-full bg-[#0a0a0a] p-12 overflow-auto font-sans">
+            <h2 className="text-3xl font-black text-white mb-12">FONTS</h2>
+            <div className="space-y-12">
+              {[
+                { name: 'Inter', font: 'font-sans' },
+                { name: 'JetBrains Mono', font: 'font-mono' },
+                { name: 'Georgia', font: 'font-serif' },
+                { name: 'Playfair Display', font: 'font-serif italic' },
+              ].map(font => (
+                <div key={font.name} className="border-b border-white/5 pb-8">
+                  <p className="text-[10px] text-gray-600 uppercase font-bold mb-4">{font.name}</p>
+                  <p className={`text-4xl text-white ${font.font}`}>The quick brown fox jumps over the lazy dog.</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        );
+      case 'car':
+        return (
+          <div className="h-full bg-[#050505] flex flex-col font-sans">
+            <div className="flex-1 relative overflow-hidden">
+              <div className="absolute inset-0 bg-gradient-to-b from-blue-600/20 to-transparent" />
+              <div className="h-full flex flex-col items-center justify-center p-12 text-center">
+                <Car size={120} className="text-white mb-8 drop-shadow-2xl" />
+                <h2 className="text-5xl font-black text-white mb-4">NEBULA DRIVE</h2>
+                <p className="text-blue-500 font-bold uppercase tracking-widest mb-12">Model S Connected</p>
+                <div className="grid grid-cols-3 gap-12 w-full max-w-2xl">
+                  <div>
+                    <p className="text-[10px] text-gray-600 uppercase font-bold mb-2">Battery</p>
+                    <p className="text-3xl font-bold text-white">84%</p>
+                  </div>
+                  <div>
+                    <p className="text-[10px] text-gray-600 uppercase font-bold mb-2">Range</p>
+                    <p className="text-3xl font-bold text-white">342 mi</p>
+                  </div>
+                  <div>
+                    <p className="text-[10px] text-gray-600 uppercase font-bold mb-2">Status</p>
+                    <p className="text-3xl font-bold text-green-500">Parked</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div className="h-24 bg-white/5 border-t border-white/5 flex items-center justify-around px-12">
+              <button className="p-4 rounded-2xl bg-white/5 text-white hover:bg-white/10 transition-colors">
+                <Power size={24} />
+              </button>
+              <button className="p-4 rounded-2xl bg-blue-600 text-white hover:bg-blue-500 transition-colors">
+                <RefreshCw size={24} />
+              </button>
+              <button className="p-4 rounded-2xl bg-white/5 text-white hover:bg-white/10 transition-colors">
+                <SettingsIcon size={24} />
+              </button>
+            </div>
+          </div>
+        );
+      default:
+        return null;
+    }
   };
 
   const desktopIcons = [
@@ -231,7 +803,14 @@ const Desktop: React.FC = () => {
         ))}
       </div>
 
-      {/* Windows */}
+      {/* Dynamic Windows */}
+      {windows.map(w => (
+        <Window key={w.id} id={w.id} title={w.title}>
+          {getAppContent(w.appId, w.id)}
+        </Window>
+      ))}
+
+      {false && <>
       <Window id="settings" title="System Settings">
         <Settings />
       </Window>
@@ -810,6 +1389,7 @@ const Desktop: React.FC = () => {
           </div>
         </div>
       </Window>
+      </>}
 
       <Taskbar />
 

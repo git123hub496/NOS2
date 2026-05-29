@@ -10,7 +10,7 @@ function cn(...inputs: ClassValue[]) {
 }
 
 interface WindowProps {
-  id: AppId;
+  id: string;
   title: string;
   children: React.ReactNode;
 }

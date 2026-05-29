@@ -15,7 +15,8 @@ export interface Process {
 }
 
 export interface WindowState {
-  id: AppId;
+  id: string;
+  appId: AppId;
   title: string;
   isOpen: boolean;
   isMinimized: boolean;
@@ -59,7 +60,7 @@ interface OSStore {
   accentColor: string;
   fontStyle: string;
   windows: WindowState[];
-  activeWindowId: AppId | null;
+  activeWindowId: string | null;
   
   // New System Services State
   processes: Process[];
@@ -104,7 +105,7 @@ interface OSStore {
   displays: Display[];
   currentDisplayId: string;
   setDisplayPosition: (id: string, x: number, y: number) => void;
-  moveWindowToDisplay: (appId: AppId, displayId: string) => void;
+  moveWindowToDisplay: (windowId: string, displayId: string) => void;
   registerDisplay: (display: Display) => void;
   unregisterDisplay: (id: string) => void;
 
@@ -120,11 +121,13 @@ interface OSStore {
   
   // App Management
   openApp: (id: AppId, title: string) => void;
-  closeApp: (id: AppId) => void;
-  minimizeApp: (id: AppId) => void;
-  maximizeApp: (id: AppId) => void;
-  snapApp: (id: AppId, side: 'left' | 'right' | 'none') => void;
-  focusApp: (id: AppId) => void;
+  openNewWindow: (appId: AppId, title: string) => void;
+  closeApp: (id: string) => void;
+  closeAllWindows: (appId: AppId) => void;
+  minimizeApp: (id: string) => void;
+  maximizeApp: (id: string) => void;
+  snapApp: (id: string, side: 'left' | 'right' | 'none') => void;
+  focusApp: (id: string) => void;
   
   // System Actions
   toggleGrayscale: () => void;
@@ -602,9 +605,8 @@ export const useOSStore = create<OSStore>((set, get) => {
     },
     
     openApp: (id, title) => set((state) => {
-      const existing = state.windows.find(w => w.id === id);
+      const existing = state.windows.find(w => w.appId === id);
       
-      // Process Management: Add process if not exists
       const existingProcess = state.processes.find(p => p.appId === id);
       let newProcesses = state.processes;
       if (!existingProcess) {
@@ -612,20 +614,24 @@ export const useOSStore = create<OSStore>((set, get) => {
           id: Math.random().toString(36).substr(2, 9),
           appId: id,
           name: title,
-          memoryUsage: Math.floor(Math.random() * 400) + 100, // Simulated memory
+          memoryUsage: Math.floor(Math.random() * 400) + 100,
           startTime: Date.now()
         }];
       }
 
       if (existing) {
+        const activeOfThisApp = state.windows.find(w => w.appId === id && w.id === state.activeWindowId);
+        const windowToFocus = activeOfThisApp || existing;
         return { 
-          windows: state.windows.map(w => w.id === id ? { ...w, isOpen: true, isMinimized: false, displayId: state.currentDisplayId } : w),
-          activeWindowId: id,
+          windows: state.windows.map(w => w.id === windowToFocus.id ? { ...w, isOpen: true, isMinimized: false, displayId: state.currentDisplayId } : w),
+          activeWindowId: windowToFocus.id,
           processes: newProcesses
         };
       }
+      
       const newWindow: WindowState = {
-        id,
+        id: id,
+        appId: id,
         title,
         isOpen: true,
         isMinimized: false,
@@ -640,10 +646,61 @@ export const useOSStore = create<OSStore>((set, get) => {
       };
     }),
 
-    closeApp: (id) => set((state) => ({
-      windows: state.windows.filter(w => w.id !== id),
-      processes: state.processes.filter(p => p.appId !== id),
-      activeWindowId: state.activeWindowId === id ? null : state.activeWindowId
+    openNewWindow: (appId, title) => set((state) => {
+      const existingCount = state.windows.filter(w => w.appId === appId).length;
+      const isFirst = existingCount === 0;
+      const uniqueId = isFirst ? appId : `${appId}-${Math.random().toString(36).substr(2, 9)}`;
+      
+      const newProcesses = [...state.processes, {
+        id: Math.random().toString(36).substr(2, 9),
+        appId: appId,
+        name: isFirst ? title : `${title} (${existingCount + 1})`,
+        memoryUsage: Math.floor(Math.random() * 400) + 100,
+        startTime: Date.now()
+      }];
+
+      const newWindow: WindowState = {
+        id: uniqueId,
+        appId: appId,
+        title: isFirst ? title : `${title} (${existingCount + 1})`,
+        isOpen: true,
+        isMinimized: false,
+        isMaximized: false,
+        zIndex: state.windows.length + 10,
+        displayId: state.currentDisplayId
+      };
+
+      return {
+        windows: [...state.windows, newWindow],
+        activeWindowId: uniqueId,
+        processes: newProcesses
+      };
+    }),
+
+    closeApp: (id) => set((state) => {
+      const windowToClose = state.windows.find(w => w.id === id);
+      if (!windowToClose) return {};
+      
+      const remainingWindowsOfApp = state.windows.filter(w => w.appId === windowToClose.appId && w.id !== id);
+      const newProcesses = remainingWindowsOfApp.length === 0 
+        ? state.processes.filter(p => p.appId !== windowToClose.appId)
+        : state.processes;
+
+      const nextActiveWindowId = state.activeWindowId === id 
+        ? (remainingWindowsOfApp.length > 0 ? remainingWindowsOfApp[remainingWindowsOfApp.length - 1].id : null) 
+        : state.activeWindowId;
+
+      return {
+        windows: state.windows.filter(w => w.id !== id),
+        processes: newProcesses,
+        activeWindowId: nextActiveWindowId
+      };
+    }),
+
+    closeAllWindows: (appId) => set((state) => ({
+      windows: state.windows.filter(w => w.appId !== appId),
+      processes: state.processes.filter(p => p.appId !== appId),
+      activeWindowId: state.windows.find(w => w.id === state.activeWindowId)?.appId === appId ? null : state.activeWindowId
     })),
 
     minimizeApp: (id) => set((state) => ({

@@ -35,7 +35,9 @@ import {
   Tv,
   StickyNote,
   Type,
-  Car
+  Car,
+  Plus,
+  Minus
 } from 'lucide-react';
 import { useOSStore, AppId, TaskbarPosition } from '../store';
 import StartMenu from './StartMenu';
@@ -48,7 +50,8 @@ const Taskbar: React.FC = () => {
     toggleQuickSettings, isQuickSettingsOpen,
     taskbarPosition, setTaskbarPosition, pinnedAppIds, togglePinApp,
     user, toggleWidgets, toggleChat, isWidgetsOpen, isChatOpen,
-    taskbarTransparency, isTaskbarAutohide, setSearchQuery
+    taskbarTransparency, isTaskbarAutohide, setSearchQuery,
+    openNewWindow, closeAllWindows, closeApp
   } = useOSStore();
   const [isStartOpen, setIsStartOpen] = useState(false);
   const [time, setTime] = useState(new Date());
@@ -165,6 +168,73 @@ const Taskbar: React.FC = () => {
           onClick={() => setContextMenu(null)}
           onMouseLeave={() => setContextMenu(null)}
         >
+          {contextMenu.appId && (
+            <>
+              {/* If window(s) are open, show relevant close options */}
+              {windows.filter(w => w.appId === contextMenu.appId).length > 1 ? (
+                <>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      const openOfApp = windows.filter(w => w.appId === contextMenu.appId);
+                      const activeOfApp = openOfApp.find(w => w.id === activeWindowId);
+                      const windowToClose = activeOfApp || openOfApp[openOfApp.length - 1];
+                      closeApp(windowToClose.id);
+                      setContextMenu(null);
+                    }}
+                    className="w-full text-left px-3 py-2 rounded-lg text-xs hover:bg-white/10 text-gray-300 flex items-center gap-2 transition-colors mb-1"
+                  >
+                    <Minus size={14} className="text-red-400" />
+                    Close One Window
+                  </button>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      closeAllWindows(contextMenu.appId!);
+                      setContextMenu(null);
+                    }}
+                    className="w-full text-left px-3 py-2 rounded-lg text-xs hover:bg-red-500/20 text-red-400 flex items-center gap-2 transition-colors mb-1"
+                  >
+                    <Trash2 size={14} />
+                    Close All Windows
+                  </button>
+                </>
+              ) : windows.filter(w => w.appId === contextMenu.appId).length === 1 ? (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    const openOfApp = windows.filter(w => w.appId === contextMenu.appId);
+                    if (openOfApp.length > 0) {
+                      closeApp(openOfApp[0].id);
+                    }
+                    setContextMenu(null);
+                  }}
+                  className="w-full text-left px-3 py-2 rounded-lg text-xs hover:bg-red-500/20 text-red-400 flex items-center gap-2 transition-colors mb-1"
+                >
+                  <Trash2 size={14} />
+                  Close
+                </button>
+              ) : null}
+
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  const appObj = allApps.find(a => a.id === contextMenu.appId);
+                  if (appObj) {
+                    openNewWindow(contextMenu.appId!, appObj.name);
+                  }
+                  setContextMenu(null);
+                }}
+                className="w-full text-left px-3 py-2 rounded-lg text-xs hover:bg-white/10 text-gray-300 flex items-center gap-2 transition-colors mb-1"
+              >
+                <Plus size={14} className="text-blue-400" />
+                Open New Window
+              </button>
+
+              <div className="h-px bg-white/5 my-1" />
+            </>
+          )}
+
           <button
             onClick={(e) => {
               e.stopPropagation();
@@ -255,14 +325,23 @@ const Taskbar: React.FC = () => {
 
         <div className={`flex flex-1 items-center justify-center gap-1 ${isVertical ? 'flex-col' : 'flex-row'}`}>
           {[...pinnedApps, ...openUnpinnedApps].map(app => {
-            const isOpen = windows.some(w => w.id === app.id);
-            const isActive = activeWindowId === app.id;
+            const isOpen = windows.some(w => w.appId === app.id);
+            const isActive = windows.some(w => w.appId === app.id && w.id === activeWindowId);
             const isPinned = pinnedAppIds.includes(app.id);
             
             return (
               <button
                 key={app.id}
-                onClick={() => isOpen ? focusApp(app.id) : openApp(app.id, app.name)}
+                onClick={() => {
+                  if (isOpen) {
+                    const appWindows = windows.filter(w => w.appId === app.id);
+                    const activeIndex = appWindows.findIndex(w => w.id === activeWindowId);
+                    const nextWin = appWindows[(activeIndex + 1) % appWindows.length];
+                    if (nextWin) focusApp(nextWin.id);
+                  } else {
+                    openApp(app.id, app.name);
+                  }
+                }}
                 onContextMenu={(e) => handleContextMenu(e, app.id)}
                 onMouseEnter={() => setFocusedAppId(app.id)}
                 className={`p-2 rounded-lg transition-all relative group ${isActive || focusedAppId === app.id ? 'bg-white/10' : 'hover:bg-white/5'}`}
